@@ -14,4 +14,5 @@ public class LoanResponseDto {
     private BigDecimal amount;
     private BigDecimal interest;
     private LocalDateTime createdAt;
+    private String name;
 }
