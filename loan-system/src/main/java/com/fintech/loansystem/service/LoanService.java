@@ -3,6 +3,7 @@ package com.fintech.loansystem.service;
 import com.fintech.loansystem.dto.LoanRequestDto;
 import com.fintech.loansystem.dto.LoanResponseDto;
 import com.fintech.loansystem.exception.LoanNotFoundException;
+import com.fintech.loansystem.mapper.DtoMapper;
 import com.fintech.loansystem.model.Loan;
 import com.fintech.loansystem.repository.LoanRepository;
 import com.fintech.loansystem.service.strategy.LoanStrategyFactory;
@@ -20,6 +21,8 @@ import java.util.stream.Collectors;
 public class LoanService {
     private final LoanRepository loanRepository;
     private final LoanStrategyFactory loanStrategyFactory;
+    private final DtoMapper dtoMapper;
+
 
     @Transactional
     public LoanResponseDto createLoan(LoanRequestDto requestDto) {
@@ -35,7 +38,7 @@ public class LoanService {
 
         loan = loanRepository.save(loan);
 
-        return mapToDTO(loan);
+        return dtoMapper.loanToLoanResponseDto(loan);
     }
 
     public LoanResponseDto getLoanById(Long id) {
@@ -43,12 +46,12 @@ public class LoanService {
 
                 .orElseThrow(() -> new LoanNotFoundException("Loan with ID " + id + " not found"));
 
-        return mapToDTO(loan);
+        return dtoMapper.loanToLoanResponseDto(loan);
     }
 
     public List<LoanResponseDto> getAllLoans() {
         return loanRepository.findAll().stream()
-                .map(this::mapToDTO)
+                .map(dtoMapper::loanToLoanResponseDto)
                 .collect(Collectors.toList());
     }
 
@@ -64,10 +67,8 @@ public class LoanService {
                 .calculateInterest(requestDto.getAmount());
 
         loan.setInterest(interest);
-
         loan = loanRepository.save(loan);
-
-        return mapToDTO(loan);
+        return dtoMapper.loanToLoanResponseDto(loan);
     }
 
     @Transactional
@@ -79,13 +80,5 @@ public class LoanService {
         loanRepository.delete(loan);
     }
 
-    private LoanResponseDto mapToDTO(Loan loan) {
-        LoanResponseDto dto = new LoanResponseDto();
-        dto.setId(loan.getId());
-        dto.setLoanType(loan.getLoanType());
-        dto.setAmount(loan.getAmount());
-        dto.setInterest(loan.getInterest());
-        dto.setCreatedAt(loan.getCreatedAt());
-        return dto;
-    }
+
 }
