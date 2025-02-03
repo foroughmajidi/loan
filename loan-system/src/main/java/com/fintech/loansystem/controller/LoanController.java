@@ -5,7 +5,6 @@ import com.fintech.loansystem.dto.LoanResponseDto;
 import com.fintech.loansystem.service.LoanService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
-import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -23,7 +22,7 @@ public class LoanController {
 
     @Operation(summary = "Create a new loan")
     @PostMapping
-    public ResponseEntity<LoanResponseDto> createLoan(@Valid @RequestBody LoanRequestDto requestDto) {
+    public ResponseEntity<LoanResponseDto> createLoan(@RequestBody LoanRequestDto requestDto) {
         return ResponseEntity.status(HttpStatus.CREATED).body(loanService.createLoan(requestDto));
     }
 
@@ -42,7 +41,7 @@ public class LoanController {
     @Operation(summary = "Update a loan")
     @PutMapping("/{id}")
     public ResponseEntity<LoanResponseDto> updateLoan(@PathVariable Long id,
-                                                      @Valid @RequestBody LoanRequestDto requestDto) {
+                                                      @RequestBody LoanRequestDto requestDto) {
         return ResponseEntity.ok(loanService.updateLoan(id, requestDto));
     }
 
