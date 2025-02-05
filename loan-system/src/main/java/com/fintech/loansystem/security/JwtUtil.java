@@ -1,5 +1,6 @@
 package com.fintech.loansystem.security;
 
+import com.fintech.loansystem.enums.Role;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
@@ -21,9 +22,10 @@ public class JwtUtil {
     }
 
 
-    public String generateToken(String userName) {
+    public String generateToken(String userName, Role role) {
         return Jwts.builder()
                 .setSubject(userName)
+                .claim("role", role.name())
                 .setIssuedAt(new Date())
                 .setExpiration(new Date(System.currentTimeMillis() + expirationTime))
                 .signWith(SignatureAlgorithm.ES256, secretKey)
