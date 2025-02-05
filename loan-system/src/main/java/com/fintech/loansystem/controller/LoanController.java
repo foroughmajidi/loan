@@ -1,6 +1,6 @@
 package com.fintech.loansystem.controller;
 
-import com.fintech.loansystem.dto.LoanRequestDto;
+import com.fintech.loansystem.dto.LoanDto;
 import com.fintech.loansystem.dto.LoanResponseDto;
 import com.fintech.loansystem.service.LoanService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -22,8 +22,8 @@ public class LoanController {
 
     @Operation(summary = "Create a new loan")
     @PostMapping
-    public ResponseEntity<LoanResponseDto> createLoan(@RequestBody LoanRequestDto requestDto) {
-        return ResponseEntity.status(HttpStatus.CREATED).body(loanService.createLoan(requestDto));
+    public ResponseEntity<LoanResponseDto> createLoan(@RequestBody LoanDto loadDto) {
+        return ResponseEntity.status(HttpStatus.CREATED).body(loanService.createLoan(loadDto));
     }
 
     @Operation(summary = "Get loan by ID")
@@ -41,8 +41,8 @@ public class LoanController {
     @Operation(summary = "Update a loan")
     @PutMapping("/{id}")
     public ResponseEntity<LoanResponseDto> updateLoan(@PathVariable Long id,
-                                                      @RequestBody LoanRequestDto requestDto) {
-        return ResponseEntity.ok(loanService.updateLoan(id, requestDto));
+                                                      @RequestBody LoanDto loanDto) {
+        return ResponseEntity.ok(loanService.updateLoan(id, loanDto));
     }
 
     @Operation(summary = "Delete a loan")
