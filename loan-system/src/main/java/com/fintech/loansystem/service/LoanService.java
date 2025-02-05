@@ -5,6 +5,7 @@ import com.fintech.loansystem.dto.LoanResponseDto;
 import com.fintech.loansystem.enums.LoanStatus;
 import com.fintech.loansystem.enums.Role;
 import com.fintech.loansystem.exception.LoanNotFoundException;
+import com.fintech.loansystem.exception.LoanRequestAuthorizationException;
 import com.fintech.loansystem.mapper.DtoMapper;
 import com.fintech.loansystem.model.Loan;
 import com.fintech.loansystem.model.User;
@@ -15,6 +16,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -101,10 +103,10 @@ public class LoanService {
     @Transactional
     public LoanResponseDto acceptLoan(Long loanId) {
         Loan loan = loanRepository.findById(loanId)
-                .orElseThrow(() -> new RuntimeException("Loan not found"));
+                .orElseThrow(() -> new LoanNotFoundException("Loan with ID " + loanId + " not found"));
 
         if (!isAdmin()) {
-            throw new RuntimeException("You are not authorized to accept this loan.");
+            throw new LoanRequestAuthorizationException("You are not authorized to accept this loan.");
         }
 
         loan.setStatus(LoanStatus.APPROVED);
@@ -116,10 +118,10 @@ public class LoanService {
     @Transactional
     public LoanResponseDto rejectLoan(Long loanId) {
         Loan loan = loanRepository.findById(loanId)
-                .orElseThrow(() -> new RuntimeException("Loan not found"));
+                .orElseThrow(() -> new LoanNotFoundException("Loan with ID " + loanId + " not found"));
 
         if (!isAdmin()) {
-            throw new RuntimeException("You are not authorized to reject this loan.");
+            throw new LoanRequestAuthorizationException("You are not authorized to reject this loan.");
         }
 
         loan.setStatus(LoanStatus.REJECTED);
@@ -133,7 +135,7 @@ public class LoanService {
         String username = userDetails.getUsername();
 
         User user = userRepository.findByUsername(username)
-                .orElseThrow(() -> new RuntimeException("User not found"));
+                .orElseThrow(() -> new UsernameNotFoundException("User not found with username: " + username));
 
         return user.getRole() == Role.ADMIN;
     }

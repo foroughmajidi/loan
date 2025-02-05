@@ -3,6 +3,10 @@ package com.fintech.loansystem.service;
 import com.fintech.loansystem.dto.LoanReqResponseDto;
 import com.fintech.loansystem.dto.LoanRequestDto;
 import com.fintech.loansystem.enums.LoanStatus;
+import com.fintech.loansystem.exception.InvalidLoanRequestStatusException;
+import com.fintech.loansystem.exception.LoanNotFoundException;
+import com.fintech.loansystem.exception.LoanRequestAlreadyExistsException;
+import com.fintech.loansystem.exception.LoanRequestAuthorizationException;
 import com.fintech.loansystem.mapper.DtoMapper;
 import com.fintech.loansystem.model.Loan;
 import com.fintech.loansystem.model.LoanRequest;
@@ -13,6 +17,7 @@ import com.fintech.loansystem.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -33,17 +38,19 @@ public class LoanRequestService {
         String username = userDetails.getUsername();
 
         User user = userRepository.findByUsername(username)
-                .orElseThrow(() -> new RuntimeException("User not found"));
+                .orElseThrow(() -> new UsernameNotFoundException("User not found with username: " + username));
+
 
         Loan loan = loanRepository.findByName(loanRequestDto.getName())
-                .orElseThrow(() -> new RuntimeException("Loan not found"));
+                .orElseThrow(() -> new LoanNotFoundException("Loan not found"));
 
         LoanRequest existingLoanRequest = loanRequestRepository.findFirstByUserAndLoanAndStatusIn(
                         user, loan, List.of(LoanStatus.PENDING, LoanStatus.REJECTED))
                 .orElse(null);
 
         if (existingLoanRequest != null) {
-            throw new RuntimeException("You already have a pending or rejected loan request for this loan.");
+            throw new LoanRequestAlreadyExistsException("You already have a pending or rejected loan request for this loan.");
+
         }
 
         LoanRequest loanRequest = new LoanRequest();
@@ -64,17 +71,17 @@ public class LoanRequestService {
         String username = userDetails.getUsername();
 
         User user = userRepository.findByUsername(username)
-                .orElseThrow(() -> new RuntimeException("User not found"));
+                .orElseThrow(() -> new UsernameNotFoundException("User not found with username: " + username));
 
         LoanRequest loanRequest = loanRequestRepository.findById(loanRequestId)
-                .orElseThrow(() -> new RuntimeException("Loan request not found"));
+                .orElseThrow(() -> new LoanNotFoundException("Loan not found"));
 
         if (!loanRequest.getUser().equals(user)) {
-            throw new RuntimeException("You can only cancel your own loan request.");
+            throw new LoanRequestAuthorizationException("You are not the person allowed to cancel loan request.");
         }
 
         if (!loanRequest.getStatus().equals(LoanStatus.PENDING)) {
-            throw new RuntimeException("Only pending loan requests can be canceled.");
+            throw new InvalidLoanRequestStatusException("Only pending loan requests can be canceled.");
         }
 
         loanRequest.setStatus(LoanStatus.CANCELED);

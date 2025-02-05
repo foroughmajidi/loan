@@ -62,4 +62,22 @@ public class GlobalExceptionHandler {
 
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errors);
     }
+
+    @ExceptionHandler(LoanRequestAlreadyExistsException.class)
+    public ResponseEntity<Object> handleLoanRequestAlreadyExistsException(LoanRequestAlreadyExistsException ex) {
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                .body(Map.of("error", ex.getMessage()));
+    }
+
+    @ExceptionHandler(LoanRequestAuthorizationException.class)
+    public ResponseEntity<Object> handleLoanRequestAuthorizationException(LoanRequestAuthorizationException ex) {
+        return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                .body(Map.of("error", ex.getMessage()));
+    }
+
+    @ExceptionHandler(InvalidLoanRequestStatusException.class)
+    public ResponseEntity<Object> handleInvalidLoanRequestStatusException(InvalidLoanRequestStatusException ex) {
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                .body(Map.of("error", ex.getMessage()));
+    }
 }

@@ -28,7 +28,7 @@ public class AuthenticationService {
         if (authentication.isAuthenticated()) {
             User user = userRepository.findByUsername(requestDto.getUsername())
                     .orElseThrow(() -> new UsernameNotFoundException("User not found with username: " + requestDto.getUsername()));
-            String token = jwtUtil.generateToken(requestDto.getUsername(),user.getRole());
+            String token = jwtUtil.generateToken(requestDto.getUsername(), user.getRole());
             return new AuthenticationResponseDto(token);
         } else {
             throw new AuthenticationException("Invalid credentials");
