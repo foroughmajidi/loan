@@ -11,6 +11,7 @@ import com.fintech.loansystem.model.User;
 import com.fintech.loansystem.repository.LoanRepository;
 import com.fintech.loansystem.repository.LoanRequestRepository;
 import com.fintech.loansystem.repository.UserRepository;
+import com.fintech.loansystem.security.JwtUtil;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -39,7 +40,8 @@ public class LoanRequestControllerTest {
 
     @Autowired
     private LoanRepository loanRepository;
-
+    @Autowired
+    private JwtUtil jwtUtil;
     @Autowired
     private UserRepository userRepository;
 
@@ -88,8 +90,11 @@ public class LoanRequestControllerTest {
         loanRequestDto.setAmount(new BigDecimal("100000"));
         loanRequestDto.setName("Home Loan");
 
+        String token = jwtUtil.generateToken("testuser",Role.USER);  // Generate JWT token for testuser
+
         mockMvc.perform(post("/api/loan-requests")
                         .contentType(MediaType.APPLICATION_JSON)
+                        .header("Authorization", token)
                         .content(objectMapper.writeValueAsString(loanRequestDto)))
                 .andDo(print())
                 .andExpect(status().isCreated())
@@ -97,7 +102,6 @@ public class LoanRequestControllerTest {
                 .andExpect(jsonPath("$.loanName").value("Home Loan"))
                 .andExpect(jsonPath("$.status").value("PENDING"));
     }
-
     @Test
     @WithMockUser(username = "admin", roles = "ADMIN")
     public void testAcceptLoan() throws Exception {
