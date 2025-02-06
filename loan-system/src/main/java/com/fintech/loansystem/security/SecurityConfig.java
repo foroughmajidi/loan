@@ -34,6 +34,12 @@ public class SecurityConfig {
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/api/auth/**").permitAll()
+                        .requestMatchers("/api/loans/**").hasRole("ADMIN")
+                        .requestMatchers("/api/loans/findLoans").authenticated()
+                        .requestMatchers("/api/loans/{id}").authenticated()
+                        .requestMatchers("/api/loan-requests/reject/{loanId}").hasRole("ADMIN")
+                        .requestMatchers("/api/loan-requests/accept/{loanId}").hasRole("ADMIN")
+                        .requestMatchers("/api/loan-requests/**").authenticated()
                         .anyRequest().authenticated()
                 )
                 .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class);

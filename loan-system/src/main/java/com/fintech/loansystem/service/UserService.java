@@ -1,12 +1,15 @@
 package com.fintech.loansystem.service;
 
 import com.fintech.loansystem.dto.UserDto;
+import com.fintech.loansystem.exception.CustomUniqueConstraintViolationException;
 import com.fintech.loansystem.mapper.DtoMapper;
 import com.fintech.loansystem.model.User;
 import com.fintech.loansystem.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+
+import javax.validation.ConstraintViolationException;
 
 @Service
 @RequiredArgsConstructor
@@ -23,8 +26,11 @@ public class UserService {
                 .password(hashedPassword)
                 .role(userDto.getRole())
                 .build();
-
-        user = userRepository.save(user);
+        try {
+            user = userRepository.save(user);
+        } catch (ConstraintViolationException e) {
+            throw new CustomUniqueConstraintViolationException("Username already exists.");
+        }
 
         return dtoMapper.userToUserDto(user);
     }
