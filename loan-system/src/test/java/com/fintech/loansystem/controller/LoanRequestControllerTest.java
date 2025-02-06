@@ -40,8 +40,7 @@ public class LoanRequestControllerTest {
 
     @Autowired
     private LoanRepository loanRepository;
-    @Autowired
-    private JwtUtil jwtUtil;
+
     @Autowired
     private UserRepository userRepository;
 
@@ -51,9 +50,14 @@ public class LoanRequestControllerTest {
     @Autowired
     private ObjectMapper objectMapper;
 
+    @Autowired
+    private JwtUtil jwtUtil;  // Autowire JwtUtil
+
     private Loan testLoan;
     private User testUser;
     private User adminUser;
+    private String userToken;
+    private String adminToken;
 
     @BeforeEach
     public void setUp() {
@@ -81,20 +85,21 @@ public class LoanRequestControllerTest {
         testLoan.setInterest(new BigDecimal("5"));
         testLoan.setCreatedAt(LocalDateTime.now());
         loanRepository.save(testLoan);
+
+        // Generate tokens
+        userToken = jwtUtil.generateToken(testUser.getUsername(), testUser.getRole());
+        adminToken = jwtUtil.generateToken(adminUser.getUsername(), adminUser.getRole());
     }
 
     @Test
-    @WithMockUser(username = "testuser")
     public void testRequestLoan() throws Exception {
         LoanRequestDto loanRequestDto = new LoanRequestDto();
         loanRequestDto.setAmount(new BigDecimal("100000"));
         loanRequestDto.setName("Home Loan");
 
-        String token = jwtUtil.generateToken("testuser",Role.USER);  // Generate JWT token for testuser
-
         mockMvc.perform(post("/api/loan-requests")
                         .contentType(MediaType.APPLICATION_JSON)
-                        .header("Authorization", token)
+                        .header("Authorization", "Bearer " + userToken)
                         .content(objectMapper.writeValueAsString(loanRequestDto)))
                 .andDo(print())
                 .andExpect(status().isCreated())
@@ -102,17 +107,20 @@ public class LoanRequestControllerTest {
                 .andExpect(jsonPath("$.loanName").value("Home Loan"))
                 .andExpect(jsonPath("$.status").value("PENDING"));
     }
+
     @Test
-    @WithMockUser(username = "admin", roles = "ADMIN")
     public void testAcceptLoan() throws Exception {
         LoanRequest loanRequest = createTestLoanRequest();
 
         mockMvc.perform(put("/api/loan-requests/accept/{id}", loanRequest.getId())
-                        .contentType(MediaType.APPLICATION_JSON))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .header("Authorization", "Bearer " + adminToken))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.id").value(loanRequest.getId()))
                 .andExpect(jsonPath("$.status", is("APPROVED")));
     }
+
+
 
     @Test
     @WithMockUser(username = "admin", roles = "ADMIN")
