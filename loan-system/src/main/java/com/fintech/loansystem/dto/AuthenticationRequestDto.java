@@ -1,9 +1,11 @@
 package com.fintech.loansystem.dto;
 
 import jakarta.validation.constraints.NotBlank;
+import lombok.AllArgsConstructor;
 import lombok.Data;
 
 @Data
+@AllArgsConstructor
 public class AuthenticationRequestDto {
     @NotBlank(message = "Username is required")
     private String username;

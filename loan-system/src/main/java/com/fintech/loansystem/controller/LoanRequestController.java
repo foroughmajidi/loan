@@ -36,7 +36,9 @@ public class LoanRequestController {
         LoanReqResponseDto responseDto = loanRequestService.requestLoan(loanRequestDto);
         return ResponseEntity.status(HttpStatus.CREATED).body(responseDto);
     }
+
     @PreAuthorize("hasRole('ADMIN')")
+    @PutMapping("/accept/{loanId}")
     public ResponseEntity<LoanResponseDto> acceptLoan(@PathVariable Long loanId) {
         LoanResponseDto loanResponse = loanService.acceptLoan(loanId);
         return new ResponseEntity<>(loanResponse, HttpStatus.OK);

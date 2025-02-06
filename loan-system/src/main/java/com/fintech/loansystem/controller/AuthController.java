@@ -37,7 +37,7 @@ public class AuthController {
 
     @Operation(summary = "Authenticate user and generate JWT token")
     @PostMapping("/login")
-    public ResponseEntity<?> loginUser(@RequestBody AuthenticationRequestDto requestDto) throws AuthenticationException {
+    public ResponseEntity<?> loginUser(@RequestBody AuthenticationRequestDto requestDto)  {
         AuthenticationResponseDto authenticate = authenticationService.authenticate(requestDto);
         return ResponseEntity.status(HttpStatus.OK).body(authenticate);
 

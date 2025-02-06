@@ -7,6 +7,8 @@ import io.jsonwebtoken.SignatureAlgorithm;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
+import javax.crypto.spec.SecretKeySpec;
+import java.security.Key;
 import java.util.Date;
 
 @Component
@@ -23,17 +25,24 @@ public class JwtUtil {
 
 
     public String generateToken(String userName, Role role) {
+        Key key = new SecretKeySpec(secretKey.getBytes(), SignatureAlgorithm.HS256.getJcaName());
+
         return Jwts.builder()
                 .setSubject(userName)
                 .claim("role", role.name())
                 .setIssuedAt(new Date())
                 .setExpiration(new Date(System.currentTimeMillis() + expirationTime))
-                .signWith(SignatureAlgorithm.ES256, secretKey)
+                .signWith(SignatureAlgorithm.HS256, key)
                 .compact();
     }
 
     public String extractUserName(String token) {
         return extractClaims(token).getSubject();
+
+    }
+
+    public String extractRole(String token) {
+        return extractClaims(token).get("role", String.class); // ✅ Extract "ADMIN"
 
     }
 
@@ -48,8 +57,11 @@ public class JwtUtil {
         return extractClaims(token).getExpiration().before(new Date());
     }
 
-    public boolean validateToken(String token, String userName) {
-        return (userName.equals(extractUserName(token)) && !isTokenExpired(token));
+    public boolean validateToken(String token, String username) {
+        String extractedUserName = extractUserName(token);
+        String extractedRole = extractRole(token); // Extract role from JWT
+
+        return (username.equals(extractedUserName) && extractedRole != null && !isTokenExpired(token));
     }
 
 

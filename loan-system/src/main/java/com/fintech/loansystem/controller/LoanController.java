@@ -8,6 +8,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -21,7 +22,8 @@ public class LoanController {
     private final LoanService loanService;
 
     @Operation(summary = "Create a new loan")
-    @PostMapping
+    @PreAuthorize("hasRole('ADMIN')")
+    @PostMapping("/create")
     public ResponseEntity<LoanResponseDto> createLoan(@RequestBody LoanDto loadDto) {
         return ResponseEntity.status(HttpStatus.CREATED).body(loanService.createLoan(loadDto));
     }
@@ -33,20 +35,22 @@ public class LoanController {
     }
 
     @Operation(summary = "Get all loans")
-    @GetMapping
+    @GetMapping("/findLoans")
     public ResponseEntity<List<LoanResponseDto>> getAllLoans() {
         return ResponseEntity.ok(loanService.getAllLoans());
     }
 
     @Operation(summary = "Update a loan")
-    @PutMapping("/{id}")
+    @PreAuthorize("hasRole('ADMIN')")
+    @PutMapping("updateLoan/{id}")
     public ResponseEntity<LoanResponseDto> updateLoan(@PathVariable Long id,
                                                       @RequestBody LoanDto loanDto) {
         return ResponseEntity.ok(loanService.updateLoan(id, loanDto));
     }
 
     @Operation(summary = "Delete a loan")
-    @DeleteMapping("/{id}")
+    @PreAuthorize("hasRole('ADMIN')")
+    @DeleteMapping("deleteLoan/{id}")
     public ResponseEntity<Void> deleteLoan(@PathVariable Long id) {
         loanService.deleteLoan(id);
         return ResponseEntity.noContent().build();

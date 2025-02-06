@@ -13,7 +13,6 @@ import com.fintech.loansystem.repository.LoanRepository;
 import com.fintech.loansystem.repository.UserRepository;
 import com.fintech.loansystem.service.strategy.LoanStrategyFactory;
 import lombok.RequiredArgsConstructor;
-import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
@@ -35,7 +34,6 @@ public class LoanService {
 
 
     @Transactional
-    @PreAuthorize("hasRole('ADMIN')")
     public LoanResponseDto createLoan(LoanDto loanDto) {
         BigDecimal interest = loanStrategyFactory.getStrategy(loanDto.getLoanType())
                 .calculateInterest(loanDto.getAmount());
@@ -105,7 +103,7 @@ public class LoanService {
         Loan loan = loanRepository.findById(loanId)
                 .orElseThrow(() -> new LoanNotFoundException("Loan with ID " + loanId + " not found"));
 
-        if (!isAdmin()) {
+        if (isAdmin()) {
             throw new LoanRequestAuthorizationException("You are not authorized to accept this loan.");
         }
 
@@ -120,7 +118,7 @@ public class LoanService {
         Loan loan = loanRepository.findById(loanId)
                 .orElseThrow(() -> new LoanNotFoundException("Loan with ID " + loanId + " not found"));
 
-        if (!isAdmin()) {
+        if (isAdmin()) {
             throw new LoanRequestAuthorizationException("You are not authorized to reject this loan.");
         }
 
@@ -137,7 +135,7 @@ public class LoanService {
         User user = userRepository.findByUsername(username)
                 .orElseThrow(() -> new UsernameNotFoundException("User not found with username: " + username));
 
-        return user.getRole() == Role.ADMIN;
+        return user.getRole() != Role.ADMIN;
     }
 
 

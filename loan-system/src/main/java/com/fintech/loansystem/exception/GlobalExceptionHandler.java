@@ -3,7 +3,7 @@ package com.fintech.loansystem.exception;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.AuthenticationException;
+import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.validation.FieldError;
 import org.springframework.validation.ObjectError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
@@ -18,17 +18,17 @@ import java.util.Map;
 @ControllerAdvice
 public class GlobalExceptionHandler {
 
-    @ExceptionHandler(AuthenticationException.class)
-    public ResponseEntity<Object> handleAuthenticationException(AuthenticationException ex) {
+    @ExceptionHandler(BadCredentialsException.class)
+    public ResponseEntity<Object> handleBadCredentialsException(BadCredentialsException ex) {
         return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                 .body(Map.of(
-                        "error", "Invalid credentials, please try again",
+                        "error", "Invalid credentials",
                         "details", ex.getMessage()
                 ));
     }
 
     @ExceptionHandler(Exception.class)
-    public ResponseEntity<Object> handleGeneralException(AuthenticationException ex) {
+    public ResponseEntity<Object> handleGeneralException(Exception ex) {
         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                 .body(Map.of("An error occurred:", ex.getMessage()));
     }
@@ -77,6 +77,18 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(InvalidLoanRequestStatusException.class)
     public ResponseEntity<Object> handleInvalidLoanRequestStatusException(InvalidLoanRequestStatusException ex) {
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                .body(Map.of("error", ex.getMessage()));
+    }
+
+    @ExceptionHandler(LoanAmountOutOfRangeException.class)
+    public ResponseEntity<Object> handleLoanAmountOutOfRange(LoanAmountOutOfRangeException ex) {
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                .body(Map.of("error", ex.getMessage()));
+    }
+
+    @ExceptionHandler(CustomUniqueConstraintViolationException.class)
+    public ResponseEntity<Object> handleUniqueConstraintViolation(CustomUniqueConstraintViolationException ex) {
         return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                 .body(Map.of("error", ex.getMessage()));
     }

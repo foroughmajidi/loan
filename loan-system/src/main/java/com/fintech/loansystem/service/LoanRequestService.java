@@ -3,10 +3,7 @@ package com.fintech.loansystem.service;
 import com.fintech.loansystem.dto.LoanReqResponseDto;
 import com.fintech.loansystem.dto.LoanRequestDto;
 import com.fintech.loansystem.enums.LoanStatus;
-import com.fintech.loansystem.exception.InvalidLoanRequestStatusException;
-import com.fintech.loansystem.exception.LoanNotFoundException;
-import com.fintech.loansystem.exception.LoanRequestAlreadyExistsException;
-import com.fintech.loansystem.exception.LoanRequestAuthorizationException;
+import com.fintech.loansystem.exception.*;
 import com.fintech.loansystem.mapper.DtoMapper;
 import com.fintech.loansystem.model.Loan;
 import com.fintech.loansystem.model.LoanRequest;
@@ -43,6 +40,12 @@ public class LoanRequestService {
 
         Loan loan = loanRepository.findByName(loanRequestDto.getName())
                 .orElseThrow(() -> new LoanNotFoundException("Loan not found"));
+
+
+        if(loanRequestDto.getAmount().compareTo(loan.getAmount()) != 0){
+            throw new LoanAmountOutOfRangeException("Entered amount is higher or lower than the loan accepted range.");
+
+        }
 
         LoanRequest existingLoanRequest = loanRequestRepository.findFirstByUserAndLoanAndStatusIn(
                         user, loan, List.of(LoanStatus.PENDING, LoanStatus.REJECTED))
