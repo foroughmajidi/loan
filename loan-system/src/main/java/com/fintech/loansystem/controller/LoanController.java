@@ -22,10 +22,10 @@ public class LoanController {
     private final LoanService loanService;
 
     @Operation(summary = "Create a new loan")
-    @PreAuthorize("hasRole('ADMIN')")
     @PostMapping("/create")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<LoanResponseDto> createLoan(@RequestBody LoanDto loadDto) {
-        return ResponseEntity.status(HttpStatus.CREATED).body(loanService.createLoan(loadDto));
+        return ResponseEntity.status(HttpStatus.OK).body(loanService.createLoan(loadDto));
     }
 
     @Operation(summary = "Get loan by ID")
@@ -54,5 +54,23 @@ public class LoanController {
     public ResponseEntity<Void> deleteLoan(@PathVariable Long id) {
         loanService.deleteLoan(id);
         return ResponseEntity.noContent().build();
+    }
+    @PreAuthorize("hasRole('ADMIN')")
+    @PutMapping("/accept/{loanId}")
+    public ResponseEntity<LoanResponseDto> acceptLoan(@PathVariable Long loanId) {
+        LoanResponseDto loanResponse = loanService.acceptLoan(loanId);
+        return new ResponseEntity<>(loanResponse, HttpStatus.OK);
+    }
+
+    @PutMapping("/reject/{loanId}")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<LoanResponseDto> rejectLoan(@PathVariable Long loanId) {
+        LoanResponseDto loanResponse = loanService.rejectLoan(loanId);
+        return new ResponseEntity<>(loanResponse, HttpStatus.OK);
+    }
+    @Operation(summary = "Get all available loan plans")
+    @GetMapping("/loanNames")
+    public ResponseEntity<List<String>> getAllLoanPlans() {
+        return ResponseEntity.ok(loanService.getAllLoanName());
     }
 }

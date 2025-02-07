@@ -2,6 +2,7 @@ package com.fintech.loansystem.dto;
 
 import com.fintech.loansystem.enums.LoanType;
 import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
@@ -11,6 +12,7 @@ import java.time.LocalDateTime;
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
+@Builder
 public class LoanResponseDto {
     private Long id;
     private LoanType loanType;
