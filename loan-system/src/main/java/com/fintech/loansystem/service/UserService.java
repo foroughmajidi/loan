@@ -6,10 +6,9 @@ import com.fintech.loansystem.mapper.DtoMapper;
 import com.fintech.loansystem.model.User;
 import com.fintech.loansystem.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
-
-import javax.validation.ConstraintViolationException;
 
 @Service
 @RequiredArgsConstructor
@@ -19,7 +18,12 @@ public class UserService {
     private final DtoMapper dtoMapper;
 
     public UserDto register(UserDto userDto) {
-
+        if (userDto.getUsername() == null ||
+                userDto.getUsername().isEmpty() ||
+                userDto.getPassword() == null ||
+                userDto.getPassword().isEmpty()) {
+            throw new IllegalArgumentException("Username and password must not be empty.");
+        }
         String hashedPassword = passwordEncoder.encode(userDto.getPassword());
         User user = User.builder()
                 .username(userDto.getUsername())
@@ -28,7 +32,7 @@ public class UserService {
                 .build();
         try {
             user = userRepository.save(user);
-        } catch (ConstraintViolationException e) {
+        } catch (DataIntegrityViolationException e) {
             throw new CustomUniqueConstraintViolationException("Username already exists.");
         }
 

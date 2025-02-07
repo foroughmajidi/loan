@@ -2,6 +2,7 @@ package com.fintech.loansystem.service;
 
 import com.fintech.loansystem.dto.UserDto;
 import com.fintech.loansystem.enums.Role;
+import com.fintech.loansystem.exception.CustomUniqueConstraintViolationException;
 import com.fintech.loansystem.mapper.DtoMapper;
 import com.fintech.loansystem.model.User;
 import com.fintech.loansystem.repository.UserRepository;
@@ -11,9 +12,11 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
 import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
@@ -31,73 +34,79 @@ class UserServiceTest {
     @InjectMocks
     private UserService userService;
 
-    private UserDto userDto;
-    private User user;
+    private UserDto validUserDto;
+    private User savedUser;
 
     @BeforeEach
     void setUp() {
-        userDto = new UserDto(1L, "testuser", "password123", Role.USER);
-        user = User.builder()
-                .id(1L)
-                .username("testuser")
-                .password("hashedPassword")
-                .role(Role.USER)
-                .build();
+        validUserDto = new UserDto();
+        validUserDto.setUsername("testuser");
+        validUserDto.setPassword("password123");
+        validUserDto.setRole(Role.USER);
+
+        savedUser = new User();
+        savedUser.setId(1L);
+        savedUser.setUsername("testuser");
+        savedUser.setPassword("hashedPassword");
+        savedUser.setRole(Role.USER);
     }
 
     @Test
-    void registerShouldRegisterUserSuccessfully() {
-        when(passwordEncoder.encode(userDto.getPassword())).thenReturn("hashedPassword");
-        when(userRepository.save(any(User.class))).thenReturn(user);
-        when(dtoMapper.userToUserDto(any(User.class))).thenReturn(userDto);
+    void registerValidUserReturnsUserDto() {
+        when(passwordEncoder.encode(validUserDto.getPassword())).thenReturn("hashedPassword");
+        when(userRepository.save(any(User.class))).thenReturn(savedUser);
+        when(dtoMapper.userToUserDto(savedUser)).thenReturn(validUserDto);
 
-        UserDto result = userService.register(userDto);
+        UserDto result = userService.register(validUserDto);
 
         assertNotNull(result);
-        assertEquals(userDto.getUsername(), result.getUsername());
-        assertEquals(userDto.getRole(), result.getRole());
-        verify(passwordEncoder).encode(userDto.getPassword());
+        assertEquals(validUserDto.getUsername(), result.getUsername());
+        assertEquals(validUserDto.getRole(), result.getRole());
+        verify(passwordEncoder).encode(validUserDto.getPassword());
         verify(userRepository).save(any(User.class));
-        verify(dtoMapper).userToUserDto(any(User.class));
+        verify(dtoMapper).userToUserDto(savedUser);
     }
 
     @Test
-    void registerShouldHashPassword() {
-        String plainPassword = "password123";
-        String hashedPassword = "hashedPassword";
-        when(passwordEncoder.encode(plainPassword)).thenReturn(hashedPassword);
-        when(userRepository.save(any(User.class))).thenReturn(user);
-        when(dtoMapper.userToUserDto(any(User.class))).thenReturn(userDto);
+    void registerDuplicateUsernameThrowsCustomUniqueConstraintViolationException() {
+        when(passwordEncoder.encode(validUserDto.getPassword())).thenReturn("hashedPassword");
+        when(userRepository.save(any(User.class))).thenThrow(new DataIntegrityViolationException("Duplicate entry"));
 
-        userService.register(userDto);
-
-        verify(passwordEncoder).encode(plainPassword);
-        verify(userRepository).save(argThat(savedUser ->
-                savedUser.getPassword().equals(hashedPassword)
-        ));
-    }
-
-    @Test
-    void registerShouldThrowExceptionWhenSavingUserFails() {
-        when(passwordEncoder.encode(anyString())).thenReturn("hashedPassword");
-        when(userRepository.save(any(User.class))).thenThrow(new RuntimeException("Database error"));
-
-        assertThrows(RuntimeException.class, () -> userService.register(userDto));
-        verify(passwordEncoder).encode(userDto.getPassword());
+        assertThrows(CustomUniqueConstraintViolationException.class, () -> userService.register(validUserDto));
+        verify(passwordEncoder).encode(validUserDto.getPassword());
         verify(userRepository).save(any(User.class));
+        verifyNoInteractions(dtoMapper);
     }
 
     @Test
-    void registerShouldSetCorrectRole() {
-        when(passwordEncoder.encode(anyString())).thenReturn("hashedPassword");
-        when(userRepository.save(any(User.class))).thenReturn(user);
-        when(dtoMapper.userToUserDto(any(User.class))).thenReturn(userDto);
+    void registerEmptyUsernameThrowsIllegalArgumentException() {
+        validUserDto.setUsername("");
 
-        UserDto result = userService.register(userDto);
+        assertThrows(IllegalArgumentException.class, () -> userService.register(validUserDto));
+        verifyNoInteractions(passwordEncoder, userRepository, dtoMapper);
+    }
 
-        assertEquals(Role.USER, result.getRole());
-        verify(userRepository).save(argThat(savedUser ->
-                savedUser.getRole() == Role.USER
-        ));
+    @Test
+    void registerEmptyPasswordThrowsIllegalArgumentException() {
+        validUserDto.setPassword("");
+
+        assertThrows(IllegalArgumentException.class, () -> userService.register(validUserDto));
+        verifyNoInteractions(passwordEncoder, userRepository, dtoMapper);
+    }
+
+    @Test
+    void registerNullUsernameThrowsIllegalArgumentException() {
+        validUserDto.setUsername(null);
+
+        assertThrows(IllegalArgumentException.class, () -> userService.register(validUserDto));
+        verifyNoInteractions(passwordEncoder, userRepository, dtoMapper);
+    }
+
+    @Test
+    void registerNullPasswordThrowsIllegalArgumentException() {
+        validUserDto.setPassword(null);
+
+        assertThrows(IllegalArgumentException.class, () -> userService.register(validUserDto));
+        verifyNoInteractions(passwordEncoder, userRepository, dtoMapper);
     }
 }
