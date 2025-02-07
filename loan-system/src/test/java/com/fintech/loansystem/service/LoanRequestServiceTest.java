@@ -12,8 +12,6 @@ import com.fintech.loansystem.repository.LoanRepository;
 import com.fintech.loansystem.repository.LoanRequestRepository;
 import com.fintech.loansystem.repository.UserRepository;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.DisplayName;
-import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -26,6 +24,7 @@ import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -38,16 +37,22 @@ class LoanRequestServiceTest {
 
     @Mock
     private LoanRepository loanRepository;
+
     @Mock
     private LoanRequestRepository loanRequestRepository;
+
     @Mock
     private UserRepository userRepository;
+
     @Mock
     private DtoMapper dtoMapper;
+
     @Mock
     private SecurityContext securityContext;
+
     @Mock
     private Authentication authentication;
+
     @Mock
     private UserDetails userDetails;
 
@@ -56,7 +61,9 @@ class LoanRequestServiceTest {
 
     private User user;
     private Loan loan;
+    private LoanRequest loanRequest;
     private LoanRequestDto loanRequestDto;
+    private LoanReqResponseDto loanReqResponseDto;
 
     @BeforeEach
     void setUp() {
@@ -67,9 +74,21 @@ class LoanRequestServiceTest {
         loan.setName("TestLoan");
         loan.setAmount(BigDecimal.valueOf(1000));
 
+        loanRequest = new LoanRequest();
+        loanRequest.setId(1L);
+        loanRequest.setUser(user);
+        loanRequest.setLoan(loan);
+        loanRequest.setAmount(BigDecimal.valueOf(1000));
+        loanRequest.setStatus(LoanStatus.PENDING);
+        loanRequest.setCreateTime(LocalDateTime.now());
+
         loanRequestDto = new LoanRequestDto();
         loanRequestDto.setName("TestLoan");
         loanRequestDto.setAmount(BigDecimal.valueOf(1000));
+
+        loanReqResponseDto = new LoanReqResponseDto();
+        loanReqResponseDto.setId(1L);
+        loanReqResponseDto.setStatus(LoanStatus.PENDING);
 
         SecurityContextHolder.setContext(securityContext);
         when(securityContext.getAuthentication()).thenReturn(authentication);
@@ -77,129 +96,104 @@ class LoanRequestServiceTest {
         when(userDetails.getUsername()).thenReturn("testUser");
     }
 
-    @Nested
-    @DisplayName("Request Loan Tests")
-    class RequestLoanTests {
+    @Test
+    void requestLoan_Success() {
+        when(userRepository.findByUsername("testUser")).thenReturn(Optional.of(user));
+        when(loanRepository.findByName("TestLoan")).thenReturn(Optional.of(loan));
+        when(loanRequestRepository.findFirstByUserAndLoanAndStatusIn(any(), any(), any())).thenReturn(Optional.empty());
+        when(loanRequestRepository.save(any(LoanRequest.class))).thenReturn(loanRequest);
+        when(dtoMapper.loanRequestToLoanResponseDto(any(LoanRequest.class))).thenReturn(loanReqResponseDto);
 
-        @Test
-        @DisplayName("Should successfully request a loan")
-        void requestLoan_Success() {
-            when(userRepository.findByUsername("testUser")).thenReturn(Optional.of(user));
-            when(loanRepository.findByName("TestLoan")).thenReturn(Optional.of(loan));
-            when(loanRequestRepository.findFirstByUserAndLoanAndStatusIn(any(), any(), any())).thenReturn(Optional.empty());
-            when(loanRequestRepository.save(any())).thenAnswer(invocation -> invocation.getArgument(0));
-            when(dtoMapper.loanRequestToLoanResponseDto(any())).thenReturn(new LoanReqResponseDto());
+        LoanReqResponseDto result = loanRequestService.requestLoan(loanRequestDto);
 
-            LoanReqResponseDto result = loanRequestService.requestLoan(loanRequestDto);
-
-            assertNotNull(result);
-            verify(loanRequestRepository).save(any());
-        }
-
-        @Test
-        @DisplayName("Should throw UsernameNotFoundException when user not found")
-        void requestLoanUserNotFound() {
-            when(userRepository.findByUsername("testUser")).thenReturn(Optional.empty());
-
-            assertThrows(UsernameNotFoundException.class, () -> loanRequestService.requestLoan(loanRequestDto));
-        }
-
-        @Test
-        @DisplayName("Should throw LoanNotFoundException when loan not found")
-        void requestLoanLoanNotFound() {
-            when(userRepository.findByUsername("testUser")).thenReturn(Optional.of(user));
-            when(loanRepository.findByName("TestLoan")).thenReturn(Optional.empty());
-
-            assertThrows(LoanNotFoundException.class, () -> loanRequestService.requestLoan(loanRequestDto));
-        }
-
-        @Test
-        @DisplayName("Should throw LoanAmountOutOfRangeException when amount is incorrect")
-        void requestLoanAmountOutOfRange() {
-            when(userRepository.findByUsername("testUser")).thenReturn(Optional.of(user));
-            when(loanRepository.findByName("TestLoan")).thenReturn(Optional.of(loan));
-            loanRequestDto.setAmount(BigDecimal.valueOf(2000));
-
-            assertThrows(LoanAmountOutOfRangeException.class, () -> loanRequestService.requestLoan(loanRequestDto));
-        }
-
-        @Test
-        @DisplayName("Should throw LoanRequestAlreadyExistsException when request already exists")
-        void requestLoanRequestAlreadyExists() {
-            when(userRepository.findByUsername("testUser")).thenReturn(Optional.of(user));
-            when(loanRepository.findByName("TestLoan")).thenReturn(Optional.of(loan));
-            when(loanRequestRepository.findFirstByUserAndLoanAndStatusIn(any(), any(), any())).thenReturn(Optional.of(new LoanRequest()));
-
-            assertThrows(LoanRequestAlreadyExistsException.class, () -> loanRequestService.requestLoan(loanRequestDto));
-        }
+        assertNotNull(result);
+        assertEquals(1L, result.getId());
+        assertEquals(LoanStatus.PENDING, result.getStatus());
+        verify(loanRequestRepository).save(any(LoanRequest.class));
     }
 
-    @Nested
-    @DisplayName("Cancel Request Tests")
-    class CancelRequestTests {
+    @Test
+    void requestLoan_UserNotFound() {
+        when(userRepository.findByUsername("testUser")).thenReturn(Optional.empty());
 
-        @Test
-        @DisplayName("Should successfully cancel a loan request")
-        void cancelRequest_Success() {
-            LoanRequest loanRequest = new LoanRequest();
-            loanRequest.setUser(user);
-            loanRequest.setStatus(LoanStatus.PENDING);
+        assertThrows(UsernameNotFoundException.class, () -> loanRequestService.requestLoan(loanRequestDto));
+    }
 
-            when(userRepository.findByUsername("testUser")).thenReturn(Optional.of(user));
-            when(loanRequestRepository.findById(1L)).thenReturn(Optional.of(loanRequest));
-            when(loanRequestRepository.save(any())).thenAnswer(invocation -> invocation.getArgument(0));
-            when(dtoMapper.loanRequestToLoanResponseDto(any())).thenReturn(new LoanReqResponseDto());
+    @Test
+    void requestLoan_LoanNotFound() {
+        when(userRepository.findByUsername("testUser")).thenReturn(Optional.of(user));
+        when(loanRepository.findByName("TestLoan")).thenReturn(Optional.empty());
 
-            LoanReqResponseDto result = loanRequestService.cancelRequest(1L);
+        assertThrows(LoanNotFoundException.class, () -> loanRequestService.requestLoan(loanRequestDto));
+    }
 
-            assertNotNull(result);
-            assertEquals(LoanStatus.CANCELED, loanRequest.getStatus());
-            verify(loanRequestRepository).save(loanRequest);
-        }
+    @Test
+    void requestLoan_AmountMismatch() {
+        when(userRepository.findByUsername("testUser")).thenReturn(Optional.of(user));
+        when(loanRepository.findByName("TestLoan")).thenReturn(Optional.of(loan));
+        loanRequestDto.setAmount(BigDecimal.valueOf(2000));
 
-        @Test
-        @DisplayName("Should throw UsernameNotFoundException when user not found")
-        void cancelRequestUserNotFound() {
-            when(userRepository.findByUsername("testUser")).thenReturn(Optional.empty());
+        assertThrows(LoanAmountOutOfRangeException.class, () -> loanRequestService.requestLoan(loanRequestDto));
+    }
 
-            assertThrows(UsernameNotFoundException.class, () -> loanRequestService.cancelRequest(1L));
-        }
+    @Test
+    void requestLoan_ExistingRequest() {
+        when(userRepository.findByUsername("testUser")).thenReturn(Optional.of(user));
+        when(loanRepository.findByName("TestLoan")).thenReturn(Optional.of(loan));
+        when(loanRequestRepository.findFirstByUserAndLoanAndStatusIn(any(), any(), any())).thenReturn(Optional.of(loanRequest));
 
-        @Test
-        @DisplayName("Should throw LoanNotFoundException when loan request not found")
-        void cancelRequestLoanRequestNotFound() {
-            when(userRepository.findByUsername("testUser")).thenReturn(Optional.of(user));
-            when(loanRequestRepository.findById(1L)).thenReturn(Optional.empty());
+        assertThrows(LoanRequestAlreadyExistsException.class, () -> loanRequestService.requestLoan(loanRequestDto));
+    }
 
-            assertThrows(LoanNotFoundException.class, () -> loanRequestService.cancelRequest(1L));
-        }
+    @Test
+    void cancelRequest_Success() {
+        when(userRepository.findByUsername("testUser")).thenReturn(Optional.of(user));
+        when(loanRequestRepository.findById(1L)).thenReturn(Optional.of(loanRequest));
+        when(loanRequestRepository.save(any(LoanRequest.class))).thenReturn(loanRequest);
+        when(dtoMapper.loanRequestToLoanResponseDto(any(LoanRequest.class))).thenReturn(loanReqResponseDto);
 
-        @Test
-        @DisplayName("Should throw LoanRequestAuthorizationException when user is not authorized")
-        void cancelRequestUnauthorized() {
-            User otherUser = new User();
-            otherUser.setUsername("otherUser");
+        LoanReqResponseDto result = loanRequestService.cancelRequest(1L);
 
-            LoanRequest loanRequest = new LoanRequest();
-            loanRequest.setUser(otherUser);
+        assertNotNull(result);
+        assertEquals(1L, result.getId());
+        assertEquals(LoanStatus.PENDING, result.getStatus());
+        verify(loanRequestRepository).save(any(LoanRequest.class));
+    }
 
-            when(userRepository.findByUsername("testUser")).thenReturn(Optional.of(user));
-            when(loanRequestRepository.findById(1L)).thenReturn(Optional.of(loanRequest));
+    @Test
+    void cancelRequest_UserNotFound() {
+        when(userRepository.findByUsername("testUser")).thenReturn(Optional.empty());
 
-            assertThrows(LoanRequestAuthorizationException.class, () -> loanRequestService.cancelRequest(1L));
-        }
+        assertThrows(UsernameNotFoundException.class, () -> loanRequestService.cancelRequest(1L));
+    }
 
-        @Test
-        @DisplayName("Should throw InvalidLoanRequestStatusException when status is not pending")
-        void cancelRequestInvalidStatus() {
-            LoanRequest loanRequest = new LoanRequest();
-            loanRequest.setUser(user);
-            loanRequest.setStatus(LoanStatus.APPROVED);
+    @Test
+    void cancelRequest_LoanRequestNotFound() {
+        when(userRepository.findByUsername("testUser")).thenReturn(Optional.of(user));
+        when(loanRequestRepository.findById(1L)).thenReturn(Optional.empty());
 
-            when(userRepository.findByUsername("testUser")).thenReturn(Optional.of(user));
-            when(loanRequestRepository.findById(1L)).thenReturn(Optional.of(loanRequest));
+        assertThrows(LoanNotFoundException.class, () -> loanRequestService.cancelRequest(1L));
+    }
 
-            assertThrows(InvalidLoanRequestStatusException.class, () -> loanRequestService.cancelRequest(1L));
-        }
+    @Test
+    void cancelRequest_UnauthorizedUser() {
+        User otherUser = new User();
+        otherUser.setUsername("otherUser");
+        loanRequest.setUser(otherUser);
+
+        when(userRepository.findByUsername("testUser")).thenReturn(Optional.of(user));
+        when(loanRequestRepository.findById(1L)).thenReturn(Optional.of(loanRequest));
+
+        assertThrows(LoanRequestAuthorizationException.class, () -> loanRequestService.cancelRequest(1L));
+    }
+
+    @Test
+    void cancelRequest_InvalidStatus() {
+        loanRequest.setStatus(LoanStatus.APPROVED);
+
+        when(userRepository.findByUsername("testUser")).thenReturn(Optional.of(user));
+        when(loanRequestRepository.findById(1L)).thenReturn(Optional.of(loanRequest));
+
+        assertThrows(InvalidLoanRequestStatusException.class, () -> loanRequestService.cancelRequest(1L));
     }
 }

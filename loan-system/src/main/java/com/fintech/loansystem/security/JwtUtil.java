@@ -42,13 +42,15 @@ public class JwtUtil {
     }
 
     public String extractRole(String token) {
-        return extractClaims(token).get("role", String.class); // ✅ Extract "ADMIN"
+        return extractClaims(token).get("role", String.class);
 
     }
 
     private Claims extractClaims(String token) {
+        Key key = new SecretKeySpec(secretKey.getBytes(), SignatureAlgorithm.HS256.getJcaName());
+
         return Jwts.parser()
-                .setSigningKey(secretKey)
+                .setSigningKey(key)
                 .parseClaimsJws(token)
                 .getBody();
     }
@@ -58,10 +60,13 @@ public class JwtUtil {
     }
 
     public boolean validateToken(String token, String username) {
-        String extractedUserName = extractUserName(token);
-        String extractedRole = extractRole(token); // Extract role from JWT
-
-        return (username.equals(extractedUserName) && extractedRole != null && !isTokenExpired(token));
+        try {
+            Claims claims = extractClaims(token);
+            String extractedUserName = claims.getSubject();
+            return (username.equals(extractedUserName) && !isTokenExpired(token));
+        } catch (Exception e) {
+            return false;
+        }
     }
 
 

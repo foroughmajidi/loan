@@ -21,34 +21,22 @@ import java.util.List;
 @Tag(name = "Loan Requests", description = "APIs for requesting loans")
 public class LoanRequestController {
     private final LoanRequestService loanRequestService;
-    private final LoanService loanService;
 
-
-    @Operation(summary = "Get all available loan plans")
-    @GetMapping("/loanNames")
-    public ResponseEntity<List<String>> getAllLoanPlans() {
-        return ResponseEntity.ok(loanService.getAllLoanName());
-    }
 
     @Operation(summary = "Request a loan")
     @PostMapping
     public ResponseEntity<LoanReqResponseDto> requestLoan(@RequestBody LoanRequestDto loanRequestDto) {
         LoanReqResponseDto responseDto = loanRequestService.requestLoan(loanRequestDto);
-        return ResponseEntity.status(HttpStatus.CREATED).body(responseDto);
+        return ResponseEntity.ok().body(responseDto);
     }
 
-    @PreAuthorize("hasRole('ADMIN')")
-    @PutMapping("/accept/{loanId}")
-    public ResponseEntity<LoanResponseDto> acceptLoan(@PathVariable Long loanId) {
-        LoanResponseDto loanResponse = loanService.acceptLoan(loanId);
-        return new ResponseEntity<>(loanResponse, HttpStatus.OK);
+    @Operation(summary = "cancel a loan")
+    @PutMapping("cancelLoanRequest/{id}")
+    public ResponseEntity<LoanReqResponseDto> CancelLoanRequest(@PathVariable Long id) {
+        LoanReqResponseDto responseDto = loanRequestService.cancelRequest(id);
+        return ResponseEntity.ok().body(responseDto);
     }
 
-    @PutMapping("/reject/{loanId}")
-    @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<LoanResponseDto> rejectLoan(@PathVariable Long loanId) {
-        LoanResponseDto loanResponse = loanService.rejectLoan(loanId);
-        return new ResponseEntity<>(loanResponse, HttpStatus.OK);
-    }
+
 
 }

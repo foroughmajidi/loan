@@ -1,14 +1,11 @@
 package com.fintech.loansystem.controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fintech.loansystem.dto.LoanReqResponseDto;
 import com.fintech.loansystem.dto.LoanRequestDto;
 import com.fintech.loansystem.enums.LoanStatus;
-import com.fintech.loansystem.enums.LoanType;
 import com.fintech.loansystem.enums.Role;
-import com.fintech.loansystem.model.Loan;
-import com.fintech.loansystem.model.LoanRequest;
 import com.fintech.loansystem.model.User;
-import com.fintech.loansystem.repository.LoanRepository;
 import com.fintech.loansystem.repository.LoanRequestRepository;
 import com.fintech.loansystem.repository.UserRepository;
 import com.fintech.loansystem.security.JwtUtil;
@@ -18,20 +15,23 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.MediaType;
-import org.springframework.security.test.context.support.WithMockUser;
+import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
-import java.time.LocalDateTime;
 
-import static org.hamcrest.Matchers.is;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
-import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @SpringBootTest
 @AutoConfigureMockMvc
+@ActiveProfiles("test")
 @Transactional
 public class LoanRequestControllerTest {
 
@@ -39,126 +39,88 @@ public class LoanRequestControllerTest {
     private MockMvc mockMvc;
 
     @Autowired
-    private LoanRepository loanRepository;
+    private ObjectMapper objectMapper;
 
     @Autowired
     private UserRepository userRepository;
 
+
+    @Autowired
+    private JwtUtil jwtTokenProvider;
+
+    private String userJwtToken;
     @Autowired
     private LoanRequestRepository loanRequestRepository;
 
-    @Autowired
-    private ObjectMapper objectMapper;
-
-    @Autowired
-    private JwtUtil jwtUtil;  // Autowire JwtUtil
-
-    private Loan testLoan;
-    private User testUser;
-    private User adminUser;
-    private String userToken;
-    private String adminToken;
-
     @BeforeEach
-    public void setUp() {
-        loanRepository.deleteAll();
-        userRepository.deleteAll();
-        loanRequestRepository.deleteAll();
+    void setUp() {
 
-        adminUser = new User();
-        adminUser.setUsername("admin");
-        adminUser.setPassword("password");
-        adminUser.setRole(Role.ADMIN);
-        userRepository.save(adminUser);
 
-        testUser = new User();
-        testUser.setUsername("testuser");
-        testUser.setPassword("password");
-        testUser.setRole(Role.USER);
-        userRepository.save(testUser);
+        User regularUser = new User();
+        regularUser.setUsername("regularuser");
+        regularUser.setPassword("userpassword");
+        regularUser.setRole(Role.USER);
+        userRepository.save(regularUser);
 
-        testLoan = new Loan();
-        testLoan.setName("Home Loan");
-        testLoan.setAmount(new BigDecimal("100000"));
-        testLoan.setLoanType(LoanType.PERSONAL);
-        testLoan.setStatus(LoanStatus.PENDING);
-        testLoan.setInterest(new BigDecimal("5"));
-        testLoan.setCreatedAt(LocalDateTime.now());
-        loanRepository.save(testLoan);
-
-        // Generate tokens
-        userToken = jwtUtil.generateToken(testUser.getUsername(), testUser.getRole());
-        adminToken = jwtUtil.generateToken(adminUser.getUsername(), adminUser.getRole());
+        // Generate JWT tokens for each user
+        userJwtToken = jwtTokenProvider.generateToken(regularUser.getUsername(), regularUser.getRole());
     }
 
     @Test
-    public void testRequestLoan() throws Exception {
+    void requestLoanSuccess() throws Exception {
         LoanRequestDto loanRequestDto = new LoanRequestDto();
-        loanRequestDto.setAmount(new BigDecimal("100000"));
-        loanRequestDto.setName("Home Loan");
+        loanRequestDto.setName("Test Loan");
+        loanRequestDto.setAmount(BigDecimal.valueOf(1000));
 
-        mockMvc.perform(post("/api/loan-requests")
+        MvcResult result = mockMvc.perform(post("/api/loan-requests")
+                        .header("Authorization", "Bearer " + userJwtToken)
                         .contentType(MediaType.APPLICATION_JSON)
-                        .header("Authorization", "Bearer " + userToken)
                         .content(objectMapper.writeValueAsString(loanRequestDto)))
-                .andDo(print())
-                .andExpect(status().isCreated())
-                .andExpect(jsonPath("$.amount").value(100000))
-                .andExpect(jsonPath("$.loanName").value("Home Loan"))
-                .andExpect(jsonPath("$.status").value("PENDING"));
+                .andExpect(status().isOk())
+                .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+                .andReturn();
+
+        LoanReqResponseDto responseDto = objectMapper.readValue(result.getResponse().getContentAsString(), LoanReqResponseDto.class);
+        assertNotNull(responseDto);
+        assertEquals(LoanStatus.PENDING, responseDto.getStatus());
     }
 
-    @Test
-    public void testAcceptLoan() throws Exception {
-        LoanRequest loanRequest = createTestLoanRequest();
 
-        mockMvc.perform(put("/api/loan-requests/accept/{id}", loanRequest.getId())
+
+    @Test
+    void cancelLoanRequestSuccess() throws Exception {
+        loanRequestRepository.deleteAll();
+        LoanRequestDto loanRequestDto = new LoanRequestDto();
+        loanRequestDto.setName("Test Loan");
+        loanRequestDto.setAmount(BigDecimal.valueOf(1000));
+
+        MvcResult createResult = mockMvc.perform(post("/api/loan-requests")
+                        .header("Authorization", "Bearer " + userJwtToken)
                         .contentType(MediaType.APPLICATION_JSON)
-                        .header("Authorization", "Bearer " + adminToken))
+                        .content(objectMapper.writeValueAsString(loanRequestDto)))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.id").value(loanRequest.getId()))
-                .andExpect(jsonPath("$.status", is("APPROVED")));
-    }
+                .andReturn();
 
+        LoanReqResponseDto createdLoan = objectMapper.readValue(createResult.getResponse().getContentAsString(), LoanReqResponseDto.class);
 
-
-    @Test
-    @WithMockUser(username = "admin", roles = "ADMIN")
-    public void testRejectLoan() throws Exception {
-        LoanRequest loanRequest = createTestLoanRequest();
-
-        mockMvc.perform(put("/api/loan-requests/reject/{id}", loanRequest.getId())
-                        .contentType(MediaType.APPLICATION_JSON))
+        MvcResult cancelResult = mockMvc.perform(put("/api/loan-requests/cancelLoanRequest/" + createdLoan.getId())
+                        .header("Authorization", "Bearer " + userJwtToken))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.id").value(loanRequest.getId()))
-                .andExpect(jsonPath("$.status", is("REJECTED")));
+                .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+                .andReturn();
+
+        LoanReqResponseDto canceledLoan = objectMapper.readValue(cancelResult.getResponse().getContentAsString(), LoanReqResponseDto.class);
+        assertNotNull(canceledLoan);
+        assertEquals(LoanStatus.CANCELED, canceledLoan.getStatus());
     }
 
     @Test
-    @WithMockUser(username = "testuser")
-    public void testNonAdminCannotAcceptLoan() throws Exception {
-        LoanRequest loanRequest = createTestLoanRequest();
-
-        mockMvc.perform(put("/api/loan-requests/accept/{id}", loanRequest.getId())
-                        .contentType(MediaType.APPLICATION_JSON))
-                .andExpect(status().isForbidden());
-    }
-
-    @Test
-    @WithMockUser(username = "admin", roles = "ADMIN")
-    public void testAcceptNonExistentLoan() throws Exception {
-        mockMvc.perform(put("/api/loan-requests/accept/999")
-                        .contentType(MediaType.APPLICATION_JSON))
+    void cancelLoanRequestNotFound() throws Exception {
+        mockMvc.perform(put("/api/loan-requests/cancelLoanRequest/999")
+                        .header("Authorization", "Bearer " + userJwtToken))
                 .andExpect(status().isNotFound());
     }
 
-    private LoanRequest createTestLoanRequest() {
-        LoanRequest loanRequest = new LoanRequest();
-        loanRequest.setUser(testUser);
-        loanRequest.setLoan(testLoan);
-        loanRequest.setAmount(new BigDecimal("100000"));
-        loanRequest.setStatus(LoanStatus.PENDING);
-        loanRequest.setCreateTime(LocalDateTime.now());
-        return loanRequestRepository.save(loanRequest);
-    }
+
+
 }
