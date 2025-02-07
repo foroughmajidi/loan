@@ -8,69 +8,94 @@ import com.fintech.loansystem.repository.UserRepository;
 import com.fintech.loansystem.security.JwtUtil;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.BadCredentialsException;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
-public class AuthenticationServiceTest {
+@ExtendWith(MockitoExtension.class)
+class AuthenticationServiceTest {
 
+    @Mock
     private AuthenticationManager authenticationManager;
+
+    @Mock
     private JwtUtil jwtUtil;
+
+    @Mock
     private UserRepository userRepository;
+
+    @InjectMocks
     private AuthenticationService authenticationService;
 
+    private AuthenticationRequestDto validRequest;
+    private User validUser;
+
     @BeforeEach
-    public void setUp() {
-        authenticationManager = mock(AuthenticationManager.class);
-        jwtUtil = mock(JwtUtil.class);
-        userRepository = mock(UserRepository.class);
-        authenticationService = new AuthenticationService(authenticationManager, jwtUtil, userRepository);
+    void setUp() {
+        validRequest = new AuthenticationRequestDto("testuser", "password");
+        validUser = new User();
+        validUser.setUsername("testuser");
+        validUser.setRole(Role.USER);
     }
 
     @Test
-    public void testAuthenticateValidCredentials() {
-        AuthenticationRequestDto requestDto = new AuthenticationRequestDto("username", "password");
-        User user = User.builder()
-                .username("username")
-                .password("password")
-                .role(Role.USER)
-                .build();
+    void authenticateValidCredentialsReturnsToken() {
+        when(authenticationManager.authenticate(any(UsernamePasswordAuthenticationToken.class))).thenReturn(null);
+        when(userRepository.findByUsername(validRequest.getUsername())).thenReturn(Optional.of(validUser));
+        when(jwtUtil.generateToken(validRequest.getUsername(), validUser.getRole())).thenReturn("valid.jwt.token");
 
-        when(authenticationManager.authenticate(any()))
-                .thenReturn(null);
-        when(userRepository.findByUsername("username"))
-                .thenReturn(Optional.of(user));
-        when(jwtUtil.generateToken("username", Role.USER))
-                .thenReturn("jwt-token");
+        AuthenticationResponseDto response = authenticationService.authenticate(validRequest);
 
-        AuthenticationResponseDto responseDto = authenticationService.authenticate(requestDto);
-
-        assertNotNull(responseDto);
-        assertEquals("jwt-token", responseDto.getToken());
+        assertNotNull(response);
+        assertEquals("valid.jwt.token", response.getToken());
+        verify(authenticationManager).authenticate(any(UsernamePasswordAuthenticationToken.class));
+        verify(userRepository).findByUsername(validRequest.getUsername());
+        verify(jwtUtil).generateToken(validRequest.getUsername(), validUser.getRole());
     }
 
     @Test
-    public void testAuthenticateInvalidCredentials() {
-        AuthenticationRequestDto requestDto = new AuthenticationRequestDto("invalidUsername", "invalidPassword");
-        when(authenticationManager.authenticate(any()))
-                .thenThrow(new BadCredentialsException("Invalid username or password"));
+    void authenticateInvalidCredentialsThrowsBadCredentialsException() {
+        when(authenticationManager.authenticate(any(UsernamePasswordAuthenticationToken.class)))
+                .thenThrow(new BadCredentialsException("Invalid credentials"));
 
-        assertThrows(BadCredentialsException.class, () -> authenticationService.authenticate(requestDto));
+        assertThrows(BadCredentialsException.class, () -> authenticationService.authenticate(validRequest));
+        verify(authenticationManager).authenticate(any(UsernamePasswordAuthenticationToken.class));
+        verifyNoInteractions(userRepository, jwtUtil);
     }
 
     @Test
-    public void testAuthenticateUserNotFound() {
-        AuthenticationRequestDto requestDto = new AuthenticationRequestDto("nonExistingUser", "password");
-        when(authenticationManager.authenticate(any()))
-                .thenReturn(null);
-        when(userRepository.findByUsername("nonExistingUser"))
-                .thenReturn(Optional.empty());
+    void authenticateUserNotFoundThrowsUsernameNotFoundException() {
+        when(authenticationManager.authenticate(any(UsernamePasswordAuthenticationToken.class))).thenReturn(null);
+        when(userRepository.findByUsername(validRequest.getUsername())).thenReturn(Optional.empty());
 
-        assertThrows(UsernameNotFoundException.class, () -> authenticationService.authenticate(requestDto));
+        assertThrows(UsernameNotFoundException.class, () -> authenticationService.authenticate(validRequest));
+        verify(authenticationManager).authenticate(any(UsernamePasswordAuthenticationToken.class));
+        verify(userRepository).findByUsername(validRequest.getUsername());
+        verifyNoInteractions(jwtUtil);
+    }
+
+    @Test
+    void authenticateEmptyUsernameThrowsIllegalArgumentException() {
+        AuthenticationRequestDto invalidRequest = new AuthenticationRequestDto("", "password");
+        assertThrows(IllegalArgumentException.class, () -> authenticationService.authenticate(invalidRequest));
+        verifyNoInteractions(authenticationManager, userRepository, jwtUtil);
+    }
+
+    @Test
+    void authenticateEmptyPasswordThrowsIllegalArgumentException() {
+        AuthenticationRequestDto invalidRequest = new AuthenticationRequestDto("testuser", "");
+        assertThrows(IllegalArgumentException.class, () -> authenticationService.authenticate(invalidRequest));
+        verifyNoInteractions(authenticationManager, userRepository, jwtUtil);
     }
 }
