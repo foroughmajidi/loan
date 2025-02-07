@@ -21,8 +21,11 @@ public class AuthenticationService {
     private final UserRepository userRepository;
 
     public AuthenticationResponseDto authenticate(AuthenticationRequestDto requestDto) {
+        if (requestDto.getUsername().isEmpty() || requestDto.getPassword().isEmpty()) {
+            throw new IllegalArgumentException("Username and password must not be empty.");
+        }
         try {
-            Authentication authentication = authenticationManager.authenticate(
+             authenticationManager.authenticate(
                     new UsernamePasswordAuthenticationToken(requestDto.getUsername(), requestDto.getPassword()));
 
             User user = userRepository.findByUsername(requestDto.getUsername())
