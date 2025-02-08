@@ -3,19 +3,13 @@ package com.fintech.loansystem.service;
 import com.fintech.loansystem.dto.LoanDto;
 import com.fintech.loansystem.dto.LoanResponseDto;
 import com.fintech.loansystem.enums.LoanStatus;
-import com.fintech.loansystem.enums.Role;
 import com.fintech.loansystem.exception.LoanNotFoundException;
-import com.fintech.loansystem.exception.LoanRequestAuthorizationException;
 import com.fintech.loansystem.mapper.DtoMapper;
 import com.fintech.loansystem.model.Loan;
-import com.fintech.loansystem.model.User;
 import com.fintech.loansystem.repository.LoanRepository;
 import com.fintech.loansystem.repository.UserRepository;
 import com.fintech.loansystem.service.strategy.LoanStrategyFactory;
 import lombok.RequiredArgsConstructor;
-import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.security.core.userdetails.UserDetails;
-import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -103,10 +97,6 @@ public class LoanService {
         Loan loan = loanRepository.findById(loanId)
                 .orElseThrow(() -> new LoanNotFoundException("Loan with ID " + loanId + " not found"));
 
-        if (isAdmin()) {
-            throw new LoanRequestAuthorizationException("You are not authorized to accept this loan.");
-        }
-
         loan.setStatus(LoanStatus.APPROVED);
         loanRepository.save(loan);
 
@@ -118,24 +108,10 @@ public class LoanService {
         Loan loan = loanRepository.findById(loanId)
                 .orElseThrow(() -> new LoanNotFoundException("Loan with ID " + loanId + " not found"));
 
-        if (isAdmin()) {
-            throw new LoanRequestAuthorizationException("You are not authorized to reject this loan.");
-        }
-
         loan.setStatus(LoanStatus.REJECTED);
         loanRepository.save(loan);
 
         return dtoMapper.loanToLoanResponseDto(loan);
-    }
-
-    private boolean isAdmin() {
-        UserDetails userDetails = (UserDetails) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
-        String username = userDetails.getUsername();
-
-        User user = userRepository.findByUsername(username)
-                .orElseThrow(() -> new UsernameNotFoundException("User not found with username: " + username));
-
-        return user.getRole() != Role.ADMIN;
     }
 
 

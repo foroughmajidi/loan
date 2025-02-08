@@ -5,6 +5,7 @@ import com.fintech.loansystem.dto.LoanResponseDto;
 import com.fintech.loansystem.service.LoanService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -24,7 +25,7 @@ public class LoanController {
     @Operation(summary = "Create a new loan")
     @PostMapping("/create")
     @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<LoanResponseDto> createLoan(@RequestBody LoanDto loadDto) {
+    public ResponseEntity<LoanResponseDto> createLoan(@RequestBody @Valid LoanDto loadDto) {
         return ResponseEntity.status(HttpStatus.OK).body(loanService.createLoan(loadDto));
     }
 
@@ -43,8 +44,7 @@ public class LoanController {
     @Operation(summary = "Update a loan")
     @PreAuthorize("hasRole('ADMIN')")
     @PutMapping("updateLoan/{id}")
-    public ResponseEntity<LoanResponseDto> updateLoan(@PathVariable Long id,
-                                                      @RequestBody LoanDto loanDto) {
+    public ResponseEntity<LoanResponseDto> updateLoan(@PathVariable Long id, @RequestBody @Valid LoanDto loanDto) {
         return ResponseEntity.ok(loanService.updateLoan(id, loanDto));
     }
 
@@ -55,6 +55,7 @@ public class LoanController {
         loanService.deleteLoan(id);
         return ResponseEntity.noContent().build();
     }
+
     @PreAuthorize("hasRole('ADMIN')")
     @PutMapping("/accept/{loanId}")
     public ResponseEntity<LoanResponseDto> acceptLoan(@PathVariable Long loanId) {
@@ -68,6 +69,7 @@ public class LoanController {
         LoanResponseDto loanResponse = loanService.rejectLoan(loanId);
         return new ResponseEntity<>(loanResponse, HttpStatus.OK);
     }
+
     @Operation(summary = "Get all available loan plans")
     @GetMapping("/loanNames")
     public ResponseEntity<List<String>> getAllLoanPlans() {

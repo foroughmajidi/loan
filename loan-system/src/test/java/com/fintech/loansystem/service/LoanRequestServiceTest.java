@@ -97,7 +97,7 @@ class LoanRequestServiceTest {
     }
 
     @Test
-    void requestLoan_Success() {
+    void requestLoanSuccess() {
         when(userRepository.findByUsername("testUser")).thenReturn(Optional.of(user));
         when(loanRepository.findByName("TestLoan")).thenReturn(Optional.of(loan));
         when(loanRequestRepository.findFirstByUserAndLoanAndStatusIn(any(), any(), any())).thenReturn(Optional.empty());
@@ -113,14 +113,14 @@ class LoanRequestServiceTest {
     }
 
     @Test
-    void requestLoan_UserNotFound() {
+    void requestLoanUserNotFound() {
         when(userRepository.findByUsername("testUser")).thenReturn(Optional.empty());
 
         assertThrows(UsernameNotFoundException.class, () -> loanRequestService.requestLoan(loanRequestDto));
     }
 
     @Test
-    void requestLoan_LoanNotFound() {
+    void requestLoanLoanNotFound() {
         when(userRepository.findByUsername("testUser")).thenReturn(Optional.of(user));
         when(loanRepository.findByName("TestLoan")).thenReturn(Optional.empty());
 
@@ -128,7 +128,7 @@ class LoanRequestServiceTest {
     }
 
     @Test
-    void requestLoan_AmountMismatch() {
+    void requestLoanAmountMismatch() {
         when(userRepository.findByUsername("testUser")).thenReturn(Optional.of(user));
         when(loanRepository.findByName("TestLoan")).thenReturn(Optional.of(loan));
         loanRequestDto.setAmount(BigDecimal.valueOf(2000));
@@ -137,7 +137,7 @@ class LoanRequestServiceTest {
     }
 
     @Test
-    void requestLoan_ExistingRequest() {
+    void requestLoanExistingRequest() {
         when(userRepository.findByUsername("testUser")).thenReturn(Optional.of(user));
         when(loanRepository.findByName("TestLoan")).thenReturn(Optional.of(loan));
         when(loanRequestRepository.findFirstByUserAndLoanAndStatusIn(any(), any(), any())).thenReturn(Optional.of(loanRequest));
@@ -146,7 +146,7 @@ class LoanRequestServiceTest {
     }
 
     @Test
-    void cancelRequest_Success() {
+    void cancelRequestSuccess() {
         when(userRepository.findByUsername("testUser")).thenReturn(Optional.of(user));
         when(loanRequestRepository.findById(1L)).thenReturn(Optional.of(loanRequest));
         when(loanRequestRepository.save(any(LoanRequest.class))).thenReturn(loanRequest);
@@ -161,14 +161,14 @@ class LoanRequestServiceTest {
     }
 
     @Test
-    void cancelRequest_UserNotFound() {
+    void cancelRequestUserNotFound() {
         when(userRepository.findByUsername("testUser")).thenReturn(Optional.empty());
 
         assertThrows(UsernameNotFoundException.class, () -> loanRequestService.cancelRequest(1L));
     }
 
     @Test
-    void cancelRequest_LoanRequestNotFound() {
+    void cancelRequestLoanRequestNotFound() {
         when(userRepository.findByUsername("testUser")).thenReturn(Optional.of(user));
         when(loanRequestRepository.findById(1L)).thenReturn(Optional.empty());
 
@@ -176,7 +176,7 @@ class LoanRequestServiceTest {
     }
 
     @Test
-    void cancelRequest_UnauthorizedUser() {
+    void cancelRequestUnauthorizedUser() {
         User otherUser = new User();
         otherUser.setUsername("otherUser");
         loanRequest.setUser(otherUser);
@@ -188,7 +188,7 @@ class LoanRequestServiceTest {
     }
 
     @Test
-    void cancelRequest_InvalidStatus() {
+    void cancelRequestInvalidStatus() {
         loanRequest.setStatus(LoanStatus.APPROVED);
 
         when(userRepository.findByUsername("testUser")).thenReturn(Optional.of(user));

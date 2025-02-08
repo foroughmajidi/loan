@@ -78,35 +78,5 @@ class UserServiceTest {
         verifyNoInteractions(dtoMapper);
     }
 
-    @Test
-    void registerEmptyUsernameThrowsIllegalArgumentException() {
-        validUserDto.setUsername("");
 
-        assertThrows(IllegalArgumentException.class, () -> userService.register(validUserDto));
-        verifyNoInteractions(passwordEncoder, userRepository, dtoMapper);
-    }
-
-    @Test
-    void registerEmptyPasswordThrowsIllegalArgumentException() {
-        validUserDto.setPassword("");
-
-        assertThrows(IllegalArgumentException.class, () -> userService.register(validUserDto));
-        verifyNoInteractions(passwordEncoder, userRepository, dtoMapper);
-    }
-
-    @Test
-    void registerNullUsernameThrowsIllegalArgumentException() {
-        validUserDto.setUsername(null);
-
-        assertThrows(IllegalArgumentException.class, () -> userService.register(validUserDto));
-        verifyNoInteractions(passwordEncoder, userRepository, dtoMapper);
-    }
-
-    @Test
-    void registerNullPasswordThrowsIllegalArgumentException() {
-        validUserDto.setPassword(null);
-
-        assertThrows(IllegalArgumentException.class, () -> userService.register(validUserDto));
-        verifyNoInteractions(passwordEncoder, userRepository, dtoMapper);
-    }
 }

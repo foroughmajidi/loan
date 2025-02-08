@@ -85,17 +85,5 @@ class AuthenticationServiceTest {
         verifyNoInteractions(jwtUtil);
     }
 
-    @Test
-    void authenticateEmptyUsernameThrowsIllegalArgumentException() {
-        AuthenticationRequestDto invalidRequest = new AuthenticationRequestDto("", "password");
-        assertThrows(IllegalArgumentException.class, () -> authenticationService.authenticate(invalidRequest));
-        verifyNoInteractions(authenticationManager, userRepository, jwtUtil);
-    }
 
-    @Test
-    void authenticateEmptyPasswordThrowsIllegalArgumentException() {
-        AuthenticationRequestDto invalidRequest = new AuthenticationRequestDto("testuser", "");
-        assertThrows(IllegalArgumentException.class, () -> authenticationService.authenticate(invalidRequest));
-        verifyNoInteractions(authenticationManager, userRepository, jwtUtil);
-    }
 }

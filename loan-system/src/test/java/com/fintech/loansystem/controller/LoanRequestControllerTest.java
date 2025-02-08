@@ -4,8 +4,11 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fintech.loansystem.dto.LoanReqResponseDto;
 import com.fintech.loansystem.dto.LoanRequestDto;
 import com.fintech.loansystem.enums.LoanStatus;
+import com.fintech.loansystem.enums.LoanType;
 import com.fintech.loansystem.enums.Role;
+import com.fintech.loansystem.model.Loan;
 import com.fintech.loansystem.model.User;
+import com.fintech.loansystem.repository.LoanRepository;
 import com.fintech.loansystem.repository.LoanRequestRepository;
 import com.fintech.loansystem.repository.UserRepository;
 import com.fintech.loansystem.security.JwtUtil;
@@ -15,12 +18,12 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.MediaType;
-import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
@@ -31,7 +34,6 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 @SpringBootTest
 @AutoConfigureMockMvc
-@ActiveProfiles("test")
 @Transactional
 public class LoanRequestControllerTest {
 
@@ -43,6 +45,9 @@ public class LoanRequestControllerTest {
 
     @Autowired
     private UserRepository userRepository;
+
+    @Autowired
+    private LoanRepository loanRepository;
 
 
     @Autowired
@@ -62,17 +67,25 @@ public class LoanRequestControllerTest {
         regularUser.setRole(Role.USER);
         userRepository.save(regularUser);
 
-        // Generate JWT tokens for each user
         userJwtToken = jwtTokenProvider.generateToken(regularUser.getUsername(), regularUser.getRole());
     }
 
     @Test
     void requestLoanSuccess() throws Exception {
+        loanRequestRepository.deleteAll();
+        loanRepository.save(Loan.builder()
+                .name("Test Loan")
+                .amount(BigDecimal.valueOf(1000))
+                .loanType(LoanType.PERSONAL)
+                .status(LoanStatus.PENDING)
+                .interest(BigDecimal.valueOf(5))
+                .createdAt(LocalDateTime.now())
+                .build());
         LoanRequestDto loanRequestDto = new LoanRequestDto();
         loanRequestDto.setName("Test Loan");
         loanRequestDto.setAmount(BigDecimal.valueOf(1000));
 
-        MvcResult result = mockMvc.perform(post("/api/loan-requests")
+        MvcResult result = mockMvc.perform(post("/api/loan-requests/requestLoan")
                         .header("Authorization", "Bearer " + userJwtToken)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(loanRequestDto)))
@@ -86,15 +99,21 @@ public class LoanRequestControllerTest {
     }
 
 
-
     @Test
     void cancelLoanRequestSuccess() throws Exception {
         loanRequestRepository.deleteAll();
         LoanRequestDto loanRequestDto = new LoanRequestDto();
         loanRequestDto.setName("Test Loan");
         loanRequestDto.setAmount(BigDecimal.valueOf(1000));
-
-        MvcResult createResult = mockMvc.perform(post("/api/loan-requests")
+        loanRepository.save(Loan.builder()
+                .name("Test Loan")
+                .amount(BigDecimal.valueOf(1000))
+                .loanType(LoanType.PERSONAL)
+                .status(LoanStatus.PENDING)
+                .interest(BigDecimal.valueOf(5))
+                .createdAt(LocalDateTime.now())
+                .build());
+        MvcResult createResult = mockMvc.perform(post("/api/loan-requests/requestLoan")
                         .header("Authorization", "Bearer " + userJwtToken)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(loanRequestDto)))
@@ -120,7 +139,6 @@ public class LoanRequestControllerTest {
                         .header("Authorization", "Bearer " + userJwtToken))
                 .andExpect(status().isNotFound());
     }
-
 
 
 }

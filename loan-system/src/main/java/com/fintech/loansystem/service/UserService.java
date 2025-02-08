@@ -18,12 +18,6 @@ public class UserService {
     private final DtoMapper dtoMapper;
 
     public UserDto register(UserDto userDto) {
-        if (userDto.getUsername() == null ||
-                userDto.getUsername().isEmpty() ||
-                userDto.getPassword() == null ||
-                userDto.getPassword().isEmpty()) {
-            throw new IllegalArgumentException("Username and password must not be empty.");
-        }
         String hashedPassword = passwordEncoder.encode(userDto.getPassword());
         User user = User.builder()
                 .username(userDto.getUsername())

@@ -18,6 +18,8 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
+import static org.springframework.security.web.util.matcher.AntPathRequestMatcher.antMatcher;
+
 @Configuration
 @EnableWebSecurity
 @RequiredArgsConstructor
@@ -43,6 +45,12 @@ public class SecurityConfig {
                         .requestMatchers("/api/loans/loanNames").authenticated()
                         .requestMatchers("/api/loans/{id}").authenticated()
                         .requestMatchers("/api/loan-requests/**").authenticated()
+                        .requestMatchers(
+                                antMatcher("/v3/api-docs/**"),
+                                antMatcher("/swagger-ui.html"),
+                                antMatcher("/swagger-ui/**")
+                        ).permitAll()
+
                         .anyRequest().authenticated()
                 )
                 .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class);

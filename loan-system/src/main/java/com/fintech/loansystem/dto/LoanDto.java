@@ -2,6 +2,7 @@ package com.fintech.loansystem.dto;
 
 import com.fintech.loansystem.enums.LoanType;
 import jakarta.validation.constraints.Min;
+import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -21,7 +22,7 @@ public class LoanDto {
     @Min(value = 0, message = "Loan amount must be greater than or equal to 0") // Ensures the amount is >= 0
     private BigDecimal amount;
 
-    @NotNull(message = "Name is required")
+    @NotBlank(message = "Name is required")
     private String name;
 
 }
