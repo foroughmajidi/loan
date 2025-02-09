@@ -40,8 +40,8 @@ Ensure Docker is installed, then run:
 docker-compose up -d
 
 ### **3. Manual Setup (Without Docker)**
-- Configure PostgreSQL in application.yml
-- Build and run the app:
+- Configure PostgreSQL in application.properties
+- Build and run the app
   
 - The application will be accessible at **http://localhost:8080**.
 
