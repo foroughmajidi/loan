@@ -52,6 +52,8 @@ class LoanServiceTest {
 
     @BeforeEach
     void setUp() {
+        loanRepository.deleteAll();
+
         LocalDateTime fixedDateTime = LocalDateTime.of(2023, 1, 1, 12, 0);
 
         loanDto = new LoanDto(LoanType.PERSONAL, BigDecimal.valueOf(1000), "Test Loan");

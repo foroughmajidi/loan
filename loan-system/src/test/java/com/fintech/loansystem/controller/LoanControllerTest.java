@@ -50,6 +50,7 @@ class LoanControllerTest {
 
     @BeforeEach
     void setUp() {
+        loanRepository.deleteAll();
         userRepository.deleteAll();
         loanDto = new LoanDto();
         loanDto.setName("Test Loan");

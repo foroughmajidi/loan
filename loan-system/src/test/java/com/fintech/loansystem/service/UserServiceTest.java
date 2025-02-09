@@ -39,6 +39,7 @@ class UserServiceTest {
 
     @BeforeEach
     void setUp() {
+        userRepository.deleteAll();
         validUserDto = new UserDto();
         validUserDto.setUsername("testuser");
         validUserDto.setPassword("password123");

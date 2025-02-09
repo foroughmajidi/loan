@@ -6,6 +6,7 @@ import com.fintech.loansystem.dto.AuthenticationResponseDto;
 import com.fintech.loansystem.dto.UserDto;
 import com.fintech.loansystem.enums.Role;
 import com.fintech.loansystem.model.User;
+import com.fintech.loansystem.repository.LoanRequestRepository;
 import com.fintech.loansystem.repository.UserRepository;
 import com.fintech.loansystem.security.JwtUtil;
 import org.junit.jupiter.api.BeforeEach;
@@ -18,7 +19,6 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
 
 import static org.junit.jupiter.api.Assertions.*;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -40,9 +40,12 @@ class AuthControllerTest {
 
     private UserDto userDto;
     private AuthenticationRequestDto authRequestDto;
+    @Autowired
+    private LoanRequestRepository loanRequestRepository;
 
     @BeforeEach
     void setUp() {
+        loanRequestRepository.deleteAll();
         userRepository.deleteAll();
 
         userDto = UserDto.builder()

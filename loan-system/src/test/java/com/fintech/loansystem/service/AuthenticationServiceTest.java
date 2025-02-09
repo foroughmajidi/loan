@@ -43,6 +43,7 @@ class AuthenticationServiceTest {
 
     @BeforeEach
     void setUp() {
+
         validRequest = new AuthenticationRequestDto("testuser", "password");
         validUser = new User();
         validUser.setUsername("testuser");

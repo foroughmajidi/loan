@@ -11,11 +11,10 @@ import java.time.LocalDateTime;
 import java.util.List;
 
 @Entity
-@Getter
-@Setter
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
+@Data
 public class Loan {
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)

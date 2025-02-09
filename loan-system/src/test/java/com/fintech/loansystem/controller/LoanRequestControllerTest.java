@@ -59,8 +59,9 @@ public class LoanRequestControllerTest {
 
     @BeforeEach
     void setUp() {
-
-
+        loanRequestRepository.deleteAll();
+        loanRepository.deleteAll();
+        userRepository.deleteAll();
         User regularUser = new User();
         regularUser.setUsername("regularuser");
         regularUser.setPassword("userpassword");

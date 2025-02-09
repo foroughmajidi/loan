@@ -67,6 +67,10 @@ class LoanRequestServiceTest {
 
     @BeforeEach
     void setUp() {
+        loanRepository.deleteAll();
+        loanRequestRepository.deleteAll();
+        userRepository.deleteAll();
+
         user = new User();
         user.setUsername("testUser");
 
