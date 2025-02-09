@@ -156,7 +156,7 @@ class LoanControllerTest {
 
         mockMvc.perform(delete("/api/loans/deleteLoan/" + savedLoan.getId())
                         .header("Authorization", "Bearer " + adminToken))
-                .andExpect(status().isNoContent());
+                .andExpect(status().isOk());
     }
 
     @Test

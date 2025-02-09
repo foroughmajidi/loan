@@ -1,0 +1,36 @@
+services:
+  loan-system:
+    container_name: loan-system
+    build:
+      context: ./
+      dockerfile: Dockerfile
+    ports:
+      - "8080:8080"
+    depends_on:
+      - postgres
+    networks:
+      db-net:
+    restart: on-failure
+
+  postgres:
+    container_name: postgres
+    image: postgres:16.0
+    environment:
+      POSTGRES_DB: loan_db
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: 123456
+      PGDATA: /data/postgres
+    volumes:
+      - db:/data/postgres
+    ports:
+      - "5432:5432"
+    networks:
+      db-net:
+    restart: unless-stopped
+
+networks:
+  db-net:
+    driver: bridge
+
+volumes:
+  db:

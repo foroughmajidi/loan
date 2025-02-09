@@ -77,7 +77,7 @@ public class LoanRequestService {
                 .orElseThrow(() -> new UsernameNotFoundException("User not found with username: " + username));
 
         LoanRequest loanRequest = loanRequestRepository.findById(loanRequestId)
-                .orElseThrow(() -> new LoanNotFoundException("Loan not found"));
+                .orElseThrow(() -> new LoanNotFoundException("Loan Request not found"));
 
         if (!loanRequest.getUser().equals(user)) {
             throw new LoanRequestAuthorizationException("You are not the person allowed to cancel loan request.");

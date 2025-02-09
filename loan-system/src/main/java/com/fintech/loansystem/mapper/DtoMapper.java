@@ -7,9 +7,8 @@ import com.fintech.loansystem.model.Loan;
 import com.fintech.loansystem.model.LoanRequest;
 import com.fintech.loansystem.model.User;
 import org.mapstruct.Mapper;
-import org.mapstruct.NullValueMappingStrategy;
 
-@Mapper(componentModel = "spring", nullValueMappingStrategy = NullValueMappingStrategy.RETURN_DEFAULT)
+@Mapper(componentModel = "spring")
 public interface DtoMapper {
 
     LoanResponseDto loanToLoanResponseDto(Loan loan);

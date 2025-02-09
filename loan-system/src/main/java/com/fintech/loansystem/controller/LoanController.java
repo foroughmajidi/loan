@@ -43,17 +43,17 @@ public class LoanController {
 
     @Operation(summary = "Update a loan")
     @PreAuthorize("hasRole('ADMIN')")
-    @PutMapping("updateLoan/{id}")
+    @PutMapping("/updateLoan/{id}")
     public ResponseEntity<LoanResponseDto> updateLoan(@PathVariable Long id, @RequestBody @Valid LoanDto loanDto) {
         return ResponseEntity.ok(loanService.updateLoan(id, loanDto));
     }
 
     @Operation(summary = "Delete a loan")
     @PreAuthorize("hasRole('ADMIN')")
-    @DeleteMapping("deleteLoan/{id}")
+    @DeleteMapping("/deleteLoan/{id}")
     public ResponseEntity<Void> deleteLoan(@PathVariable Long id) {
         loanService.deleteLoan(id);
-        return ResponseEntity.noContent().build();
+        return new ResponseEntity<>(HttpStatus.OK);
     }
 
     @PreAuthorize("hasRole('ADMIN')")
