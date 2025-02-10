@@ -54,10 +54,12 @@ docker-compose up -d
 | POST   | /api/auth/login      | Authenticate and obtain JWT token |
 
 ### **Loan Request Endpoints**
-| Method | Endpoint                                   | Description           |                                 
-|--------|--------------------------------------------|-----------------------|
-| POST   | /api/loan-requests/requestLoan             | Submit a loan request |
-| PUT    | /api/loan-requests/cancelLoanRequest/{id}  | Cancel a loan request |
+| Method | Endpoint                                          | Description                             |                                 
+|--------|---------------------------------------------------|-----------------------------------------|
+| POST   | /api/loan-requests/requestLoan                    | Submit a loan request                   |
+| PUT    | /api/loan-requests/cancelLoanRequest/{id}         | Cancel a loan request                   |
+| PUT    | /api/loan-requests/accept/{loanRequestId}         | Accept a loan request  (Admin Only)     |
+| PUT    | /api/loan-requests/reject/{loanRequestId}         | Reject a loan request  (Admin Only)     |
 
 ### **Loan Management Endpoints**
 | Method | Endpoint                         | Description                             |
@@ -67,9 +69,7 @@ docker-compose up -d
 | GET    |  /api/loans/findLoans            | Get all loans                           |
 | PUT    |  /api/loans/updateLoan/{id}      | Update a loan          (Admin Only)     |
 | DELETE |  /api/loans/deleteLoan/{id}      | Delete a loan          (Admin Only)     |
-| PUT    |  /api/loans/accept/{loanId}      | Accept a loan request  (Admin Only)     |
-| PUT    |  /api/loans/reject/{loanId}      | Reject a loan request  (Admin Only)     |
-| GET    |  /api/loans/loanNames            | Get available loan plans                |
+| GET    |  /api/loans/loanNames            | Get available loan                 |
 
 ---
 
@@ -88,8 +88,9 @@ mvn test
 
 ## Swagger API Documentation
 Once the application is running, access **Swagger UI** at:
-- http://localhost:8080/swagger-ui.html
-- http://localhost:8080/v3/api-docs
+ -http://localhost:8080/swagger-ui/index.html
+ - http://localhost:8080/swagger-ui.html
+ - http://localhost:8080/v3/api-docs
 
 
 ## Contributors
