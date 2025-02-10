@@ -2,12 +2,12 @@ package com.fintech.loansystem.controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fintech.loansystem.dto.LoanDto;
-import com.fintech.loansystem.enums.LoanStatus;
 import com.fintech.loansystem.enums.LoanType;
 import com.fintech.loansystem.enums.Role;
 import com.fintech.loansystem.model.Loan;
 import com.fintech.loansystem.model.User;
 import com.fintech.loansystem.repository.LoanRepository;
+import com.fintech.loansystem.repository.LoanRequestRepository;
 import com.fintech.loansystem.repository.UserRepository;
 import com.fintech.loansystem.security.JwtUtil;
 import org.junit.jupiter.api.BeforeEach;
@@ -40,7 +40,8 @@ class LoanControllerTest {
 
     @Autowired
     private UserRepository userRepository;
-
+    @Autowired
+    private LoanRequestRepository loanRequestRepository;
     @Autowired
     private JwtUtil jwtTokenProvider;
 
@@ -50,6 +51,7 @@ class LoanControllerTest {
 
     @BeforeEach
     void setUp() {
+        loanRequestRepository.deleteAll();
         loanRepository.deleteAll();
         userRepository.deleteAll();
         loanDto = new LoanDto();
@@ -105,7 +107,6 @@ class LoanControllerTest {
                 .name("Test Loan")
                 .amount(BigDecimal.valueOf(1000))
                 .loanType(LoanType.PERSONAL)
-                .status(LoanStatus.PENDING)
                 .interest(BigDecimal.valueOf(5))
                 .createdAt(LocalDateTime.now())
                 .build());
@@ -119,8 +120,8 @@ class LoanControllerTest {
 
     @Test
     void getAllLoansSuccess() throws Exception {
-        loanRepository.save(Loan.builder().name("Loan 1").amount(BigDecimal.valueOf(1000)).loanType(LoanType.PERSONAL).status(LoanStatus.PENDING).interest(BigDecimal.valueOf(5)).createdAt(LocalDateTime.now()).build());
-        loanRepository.save(Loan.builder().name("Loan 2").amount(BigDecimal.valueOf(2000)).loanType(LoanType.BUSINESS).status(LoanStatus.PENDING).interest(BigDecimal.valueOf(7)).createdAt(LocalDateTime.now()).build());
+        loanRepository.save(Loan.builder().name("Loan 1").amount(BigDecimal.valueOf(1000)).loanType(LoanType.PERSONAL).interest(BigDecimal.valueOf(5)).createdAt(LocalDateTime.now()).build());
+        loanRepository.save(Loan.builder().name("Loan 2").amount(BigDecimal.valueOf(2000)).loanType(LoanType.BUSINESS).interest(BigDecimal.valueOf(7)).createdAt(LocalDateTime.now()).build());
 
         mockMvc.perform(get("/api/loans/findLoans")
                         .header("Authorization", "Bearer " + userToken))
@@ -132,7 +133,7 @@ class LoanControllerTest {
     @Test
     void updateLoanAsAdminSuccess() throws Exception {
         Loan savedLoan = loanRepository.save(Loan.builder().name("Old Loan").amount(BigDecimal.valueOf(1000))
-                .loanType(LoanType.PERSONAL).status(LoanStatus.PENDING).interest(BigDecimal.valueOf(6)).createdAt(LocalDateTime.now()).build());
+                .loanType(LoanType.PERSONAL).interest(BigDecimal.valueOf(6)).createdAt(LocalDateTime.now()).build());
         LoanDto updateDto = new LoanDto();
         updateDto.setName("Updated Loan");
         updateDto.setAmount(BigDecimal.valueOf(1500));
@@ -153,7 +154,7 @@ class LoanControllerTest {
 
     @Test
     void deleteLoanAsAdminSuccess() throws Exception {
-        Loan savedLoan = loanRepository.save(Loan.builder().name("To Delete").amount(BigDecimal.valueOf(1000)).loanType(LoanType.PERSONAL).status(LoanStatus.PENDING).interest(BigDecimal.valueOf(5)).createdAt(LocalDateTime.now()).build());
+        Loan savedLoan = loanRepository.save(Loan.builder().name("To Delete").amount(BigDecimal.valueOf(1000)).loanType(LoanType.PERSONAL).interest(BigDecimal.valueOf(5)).createdAt(LocalDateTime.now()).build());
 
         mockMvc.perform(delete("/api/loans/deleteLoan/" + savedLoan.getId())
                         .header("Authorization", "Bearer " + adminToken))
@@ -161,33 +162,9 @@ class LoanControllerTest {
     }
 
     @Test
-    void acceptLoanAsAdminSuccess() throws Exception {
-        Loan savedLoan = loanRepository.save(Loan.builder().name("To Accept").amount(BigDecimal.valueOf(1000)).loanType(LoanType.PERSONAL).status(LoanStatus.PENDING).interest(BigDecimal.valueOf(5)).createdAt(LocalDateTime.now()).build());
-
-        mockMvc.perform(put("/api/loans/accept/" + savedLoan.getId())
-                        .header("Authorization", "Bearer " + adminToken))
-                .andExpect(status().isOk());
-    }
-
-    @Test
-    void rejectLoanAsAdminSuccess() throws Exception {
-        Loan savedLoan = loanRepository.save(Loan.builder().name("To Reject").amount(BigDecimal.valueOf(1000)).loanType(LoanType.PERSONAL).status(LoanStatus.PENDING).interest(BigDecimal.valueOf(5)).createdAt(LocalDateTime.now()).build());
-
-        mockMvc.perform(put("/api/loans/reject/" + savedLoan.getId())
-                        .header("Authorization", "Bearer " + adminToken))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.name").value("To Reject"))
-            .andExpect(jsonPath("$.id").exists())
-                .andExpect(jsonPath("$.loanType").value("PERSONAL"))
-                .andExpect(jsonPath("$.amount").value(1000))
-                .andExpect(jsonPath("$.interest").value(5))
-                .andExpect(jsonPath("$.createdAt").exists());
-    }
-
-    @Test
     void getAllLoanPlansSuccess() throws Exception {
-        loanRepository.save(Loan.builder().name("Loan Plan 1").amount(BigDecimal.valueOf(1000)).loanType(LoanType.PERSONAL).status(LoanStatus.PENDING).interest(BigDecimal.valueOf(5)).createdAt(LocalDateTime.now()).build());
-        loanRepository.save(Loan.builder().name("Loan Plan 2").amount(BigDecimal.valueOf(2000)).loanType(LoanType.BUSINESS).status(LoanStatus.PENDING).interest(BigDecimal.valueOf(7)).createdAt(LocalDateTime.now()).build());
+        loanRepository.save(Loan.builder().name("Loan Plan 1").amount(BigDecimal.valueOf(1000)).loanType(LoanType.PERSONAL).interest(BigDecimal.valueOf(5)).createdAt(LocalDateTime.now()).build());
+        loanRepository.save(Loan.builder().name("Loan Plan 2").amount(BigDecimal.valueOf(2000)).loanType(LoanType.BUSINESS).interest(BigDecimal.valueOf(7)).createdAt(LocalDateTime.now()).build());
 
         mockMvc.perform(get("/api/loans/loanNames")
                         .header("Authorization", "Bearer " + userToken))

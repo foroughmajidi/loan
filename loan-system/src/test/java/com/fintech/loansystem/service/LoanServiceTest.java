@@ -2,7 +2,6 @@ package com.fintech.loansystem.service;
 
 import com.fintech.loansystem.dto.LoanDto;
 import com.fintech.loansystem.dto.LoanResponseDto;
-import com.fintech.loansystem.enums.LoanStatus;
 import com.fintech.loansystem.enums.LoanType;
 import com.fintech.loansystem.exception.LoanNotFoundException;
 import com.fintech.loansystem.mapper.DtoMapper;
@@ -65,7 +64,6 @@ class LoanServiceTest {
                 .interest(BigDecimal.valueOf(50))
                 .createdAt(fixedDateTime)
                 .name("Test Loan")
-                .status(LoanStatus.PENDING)
                 .build();
 
         loanResponseDto = new LoanResponseDto();
@@ -144,30 +142,6 @@ class LoanServiceTest {
         verify(loanRepository).delete(loan);
     }
 
-    @Test
-    void acceptLoanSuccess() {
-        when(loanRepository.findById(1L)).thenReturn(Optional.of(loan));
-        when(loanRepository.save(any())).thenReturn(loan);
-        when(dtoMapper.loanToLoanResponseDto(any())).thenReturn(loanResponseDto);
-
-        LoanResponseDto result = loanService.acceptLoan(1L);
-
-        assertNotNull(result);
-        assertEquals(LoanStatus.APPROVED, loan.getStatus());
-    }
-
-
-    @Test
-    void rejectLoanSuccess() {
-        when(loanRepository.findById(1L)).thenReturn(Optional.of(loan));
-        when(loanRepository.save(any())).thenReturn(loan);
-        when(dtoMapper.loanToLoanResponseDto(any())).thenReturn(loanResponseDto);
-
-        LoanResponseDto result = loanService.rejectLoan(1L);
-
-        assertNotNull(result);
-        assertEquals(LoanStatus.REJECTED, loan.getStatus());
-    }
 
 
 }

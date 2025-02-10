@@ -70,29 +70,37 @@ class LoanRequestServiceTest {
         loanRepository.deleteAll();
         loanRequestRepository.deleteAll();
         userRepository.deleteAll();
+        user = User.builder()
+                .id(1L)
+                .username("testuser")
+                .password("password")
+                .build();
 
-        user = new User();
-        user.setUsername("testUser");
+        loan = Loan.builder()
+                .id(1L)
+                .name("TestLoan")
+                .amount(BigDecimal.valueOf(1000))
+                .build();
 
-        loan = new Loan();
-        loan.setName("TestLoan");
-        loan.setAmount(BigDecimal.valueOf(1000));
+        loanRequest = LoanRequest.builder()
+                .id(1L)
+                .user(user)
+                .loan(loan)
+                .amount(BigDecimal.valueOf(1000))
+                .status(LoanStatus.PENDING)
+                .createTime(LocalDateTime.now())
+                .build();
 
-        loanRequest = new LoanRequest();
-        loanRequest.setId(1L);
-        loanRequest.setUser(user);
-        loanRequest.setLoan(loan);
-        loanRequest.setAmount(BigDecimal.valueOf(1000));
-        loanRequest.setStatus(LoanStatus.PENDING);
-        loanRequest.setCreateTime(LocalDateTime.now());
+        loanReqResponseDto = new LoanReqResponseDto();
+        loanReqResponseDto.setId(1L);
+        loanReqResponseDto.setAmount(BigDecimal.valueOf(1000));
+        loanReqResponseDto.setStatus(LoanStatus.PENDING);
+
 
         loanRequestDto = new LoanRequestDto();
         loanRequestDto.setName("TestLoan");
         loanRequestDto.setAmount(BigDecimal.valueOf(1000));
 
-        loanReqResponseDto = new LoanReqResponseDto();
-        loanReqResponseDto.setId(1L);
-        loanReqResponseDto.setStatus(LoanStatus.PENDING);
 
         SecurityContextHolder.setContext(securityContext);
         when(securityContext.getAuthentication()).thenReturn(authentication);

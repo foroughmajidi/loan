@@ -39,12 +39,13 @@ public class SecurityConfig {
                         .requestMatchers("/api/loans/create").hasRole("ADMIN")
                         .requestMatchers("/api/loans/updateLoan/{id}").hasRole("ADMIN")
                         .requestMatchers("/api/loans/deleteLoan/{id}").hasRole("ADMIN")
-                        .requestMatchers("/api/loans/reject/{loanId}").hasRole("ADMIN")
-                        .requestMatchers("/api/loans/accept/{loanId}").hasRole("ADMIN")
                         .requestMatchers("/api/loans/findLoans").authenticated()
                         .requestMatchers("/api/loans/loanNames").authenticated()
                         .requestMatchers("/api/loans/{id}").authenticated()
-                        .requestMatchers("/api/loan-requests/**").authenticated()
+                        .requestMatchers("/api/loan-requests/requestLoan").authenticated()
+                        .requestMatchers("/api/loan-requests/cancelLoanRequest/{id}").authenticated()
+                        .requestMatchers("/api/loan-requests/reject/{loanRequestId}").hasRole("ADMIN")
+                        .requestMatchers("/api/loan-requests/accept/{loanRequestId}").hasRole("ADMIN")
                         .requestMatchers(
                                 antMatcher("/v3/api-docs/**"),
                                 antMatcher("/swagger-ui.html"),

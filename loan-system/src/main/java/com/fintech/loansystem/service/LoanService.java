@@ -2,7 +2,6 @@ package com.fintech.loansystem.service;
 
 import com.fintech.loansystem.dto.LoanDto;
 import com.fintech.loansystem.dto.LoanResponseDto;
-import com.fintech.loansystem.enums.LoanStatus;
 import com.fintech.loansystem.exception.LoanNotFoundException;
 import com.fintech.loansystem.mapper.DtoMapper;
 import com.fintech.loansystem.model.Loan;
@@ -39,7 +38,6 @@ public class LoanService {
                 .interest(interest)
                 .createdAt(LocalDateTime.now())
                 .name(loanDto.getName())
-                .status(LoanStatus.PENDING)
                 .build();
 
         loan = loanRepository.save(loan);
@@ -90,28 +88,6 @@ public class LoanService {
                 .orElseThrow(() -> new LoanNotFoundException("Loan with ID " + id + " not found"));
 
         loanRepository.delete(loan);
-    }
-
-    @Transactional
-    public LoanResponseDto acceptLoan(Long loanId) {
-        Loan loan = loanRepository.findById(loanId)
-                .orElseThrow(() -> new LoanNotFoundException("Loan with ID " + loanId + " not found"));
-
-        loan.setStatus(LoanStatus.APPROVED);
-        loanRepository.save(loan);
-
-        return dtoMapper.loanToLoanResponseDto(loan);
-    }
-
-    @Transactional
-    public LoanResponseDto rejectLoan(Long loanId) {
-        Loan loan = loanRepository.findById(loanId)
-                .orElseThrow(() -> new LoanNotFoundException("Loan with ID " + loanId + " not found"));
-
-        loan.setStatus(LoanStatus.REJECTED);
-        loanRepository.save(loan);
-
-        return dtoMapper.loanToLoanResponseDto(loan);
     }
 
 

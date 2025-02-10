@@ -1,10 +1,12 @@
 package com.fintech.loansystem.model;
 
 
-import com.fintech.loansystem.enums.LoanStatus;
 import com.fintech.loansystem.enums.LoanType;
 import jakarta.persistence.*;
-import lombok.*;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -27,9 +29,6 @@ public class Loan {
     @Column(nullable = false)
     private BigDecimal amount;
 
-    @Enumerated(EnumType.STRING)
-    @Column(nullable = false)
-    private LoanStatus status;
 
     @OneToMany(mappedBy = "loan")
     private List<LoanRequest> loanRequests;

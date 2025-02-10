@@ -3,11 +3,14 @@ package com.fintech.loansystem.controller;
 import com.fintech.loansystem.dto.LoanReqResponseDto;
 import com.fintech.loansystem.dto.LoanRequestDto;
 import com.fintech.loansystem.service.LoanRequestService;
+import com.fintech.loansystem.service.LoanService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -16,6 +19,7 @@ import org.springframework.web.bind.annotation.*;
 @Tag(name = "Loan Requests", description = "APIs for requesting loans")
 public class LoanRequestController {
     private final LoanRequestService loanRequestService;
+    private final LoanService loanService;
 
 
     @Operation(summary = "Request a loan")
@@ -33,4 +37,17 @@ public class LoanRequestController {
     }
 
 
+    @PreAuthorize("hasRole('ADMIN')")
+    @PutMapping("/accept/{loanRequestId}")
+    public ResponseEntity<LoanReqResponseDto> acceptLoanRequest(@PathVariable Long loanRequestId) {
+        LoanReqResponseDto loanResponse = loanRequestService.acceptLoanRequest(loanRequestId);
+        return new ResponseEntity<>(loanResponse, HttpStatus.OK);
+    }
+
+    @PutMapping("/reject/{loanRequestId}")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<LoanReqResponseDto> rejectLoanRequest(@PathVariable Long loanRequestId) {
+        LoanReqResponseDto loanResponse = loanRequestService.rejectLoanRequest(loanRequestId);
+        return new ResponseEntity<>(loanResponse, HttpStatus.OK);
+    }
 }

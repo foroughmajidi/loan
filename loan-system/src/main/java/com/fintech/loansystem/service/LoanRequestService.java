@@ -62,6 +62,7 @@ public class LoanRequestService {
         loanRequest.setAmount(loanRequestDto.getAmount());
         loanRequest.setStatus(LoanStatus.PENDING);
         loanRequest.setCreateTime(LocalDateTime.now());
+        loanRequest.setName(loanRequestDto.getName());
 
         loanRequest = loanRequestRepository.save(loanRequest);
 
@@ -94,4 +95,34 @@ public class LoanRequestService {
         return dtoMapper.loanRequestToLoanResponseDto(loanRequest);
     }
 
+    @Transactional
+    public LoanReqResponseDto acceptLoanRequest(Long loanRequestId) {
+        LoanRequest loanRequest = loanRequestRepository.findById(loanRequestId)
+                .orElseThrow(() -> new LoanNotFoundException("Loan Request not found"));
+
+        if (!loanRequest.getStatus().equals(LoanStatus.PENDING)) {
+            throw new InvalidLoanRequestStatusException("Only pending loan requests can be approved.");
+        }
+        loanRequest.setStatus(LoanStatus.APPROVED);
+
+        loanRequest = loanRequestRepository.save(loanRequest);
+
+        return dtoMapper.loanRequestToLoanResponseDto(loanRequest);
+    }
+
+    @Transactional
+    public LoanReqResponseDto rejectLoanRequest(Long loanRequestId) {
+        LoanRequest loanRequest = loanRequestRepository.findById(loanRequestId)
+                .orElseThrow(() -> new LoanNotFoundException("Loan Request not found"));
+
+        if (!loanRequest.getStatus().equals(LoanStatus.PENDING)) {
+            throw new InvalidLoanRequestStatusException("Only pending loan requests can be rejected.");
+        }
+        loanRequest.setStatus(LoanStatus.REJECTED);
+
+        loanRequest = loanRequestRepository.save(loanRequest);
+
+        return dtoMapper.loanRequestToLoanResponseDto(loanRequest);
+
+    }
 }

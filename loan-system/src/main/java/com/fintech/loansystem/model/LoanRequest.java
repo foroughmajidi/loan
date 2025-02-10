@@ -2,7 +2,10 @@ package com.fintech.loansystem.model;
 
 import com.fintech.loansystem.enums.LoanStatus;
 import jakarta.persistence.*;
-import lombok.*;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -22,9 +25,13 @@ public class LoanRequest {
     private User user;
 
     private BigDecimal amount;
-    private LoanStatus status;
-    private LocalDateTime createTime;
 
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    private LoanStatus status;
+
+    private LocalDateTime createTime;
+    private String name;
     @ManyToOne
     @JoinColumn(name = "loan_id", nullable = false)
     private Loan loan;
